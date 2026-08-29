@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consult360 AI — Pre-Consultation Intelligence</title>
+  <meta name="description" content="AI-powered pre-consultation patient report summarization. Medical entity extraction, timeline builder, clinical change detection, risk analysis, and missing investigation alerts for doctors.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+</head>
+<body>
+
+<!-- ══════════════ API KEY MODAL ══════════════ -->
+<div id="api-modal" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-icon">🔑</div>
+    <h2>Connect Gemini AI</h2>
+    <p>Enter your Google Gemini API key to enable real-time AI analysis of uploaded patient reports. Demo patients work without a key.</p>
+    <div class="input-group">
+      <input type="password" id="api-key-input" placeholder="AIzaSy..." autocomplete="off"
+             onkeydown="if(event.key==='Enter') saveApiKey()">
+      <button onclick="saveApiKey()" class="btn-primary">Connect</button>
+    </div>
+    <p class="modal-hint">
+      Get a free key at <a href="https://aistudio.google.com" target="_blank">aistudio.google.com</a>
+      &nbsp;·&nbsp; Uses Gemini 2.0 Flash
+    </p>
+  </div>
+</div>
+
+<!-- ══════════════ UPLOAD MODAL ══════════════ -->
+<div id="upload-modal" class="modal-overlay hidden">
+  <div class="modal upload-modal">
+    <button class="modal-close" onclick="closeUploadModal()">✕</button>
+
+    <!-- Drop Zone -->
+    <div class="upload-area" id="upload-area">
+      <div class="upload-icon">📎</div>
+      <h3>Upload Patient Reports</h3>
+      <p>Drop files here or click to browse</p>
+      <div class="upload-types-hint">
+        <span>📄 PDF</span>
+        <span>🫀 ECG / Echo</span>
+        <span>📝 Handwritten</span>
+        <span>🧪 Lab Reports</span>
+        <span>🫁 X-Ray</span>
+      </div>
+      <input type="file" id="file-input"
+             accept=".pdf,.txt,.jpg,.jpeg,.png,.webp"
+             multiple hidden>
+      <button class="btn-outline" onclick="document.getElementById('file-input').click()">
+        Choose Files
+      </button>
+      <p style="font-size:11px;color:var(--text-3);margin-top:8px">Up to 10 files · PDF, JPG, PNG, WebP · 20MB each</p>
+    </div>
+
+    <!-- Selected Files List (shown after files chosen) -->
+    <div id="file-list-container" class="hidden">
+      <div class="file-list-header">
+        <span id="file-list-count">0 files selected</span>
+        <button class="btn-text-sm" onclick="clearAllFiles()">Clear all</button>
+      </div>
+      <div id="file-list"></div>
+      <button class="btn-primary btn-analyze" id="btn-analyze" onclick="startAnalysis()">
+        🚀 &nbsp;Analyze All Reports
+      </button>
+    </div>
+
+    <div id="upload-status" class="hidden"></div>
+  </div>
+</div>
+
+
+<!-- ══════════════ APP SHELL ══════════════ -->
+<div id="app">
+
+  <!-- SIDEBAR -->
+  <aside id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">⚕</div>
+      <div>
+        <div class="brand-name">Consult360 AI</div>
+        <div class="brand-tag">Pre-Consultation Intelligence</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Today's Queue</div>
+      <div id="patient-list">
+        <!-- Rendered by app.js -->
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <button class="btn-upload-new" onclick="showUploadModal()">
+        ＋ &nbsp;Upload New Report
+      </button>
+      <div class="api-status" id="api-status" onclick="showApiModal()" title="Configure Gemini API Key">
+        <span class="status-dot" id="status-dot"></span>
+        <span id="status-text">Connect AI</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main id="main">
+
+    <!-- Welcome Screen -->
+    <div id="welcome-screen">
+      <div class="welcome-content">
+        <div class="welcome-logo">⚕</div>
+        <h1>Consult360 AI</h1>
+        <p>Select a patient from the queue to view their AI-generated pre-consultation brief, or upload a patient report to begin analysis.</p>
+        <div class="welcome-features">
+          <div class="feature-chip">📄 PDF → OCR</div>
+          <div class="feature-chip">🧬 Medical Entity Extraction</div>
+          <div class="feature-chip">📅 Timeline Builder</div>
+          <div class="feature-chip">📊 Clinical Change Detection</div>
+          <div class="feature-chip">🚨 Risk Detection</div>
+          <div class="feature-chip">🔬 Missing Investigation Alerts</div>
+          <div class="feature-chip">🤖 Explainable AI</div>
+          <div class="feature-chip">✨ Gemini Summary</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Patient View (shown after patient selected) -->
+    <div id="patient-view" class="hidden">
+
+      <!-- Patient Header -->
+      <div id="patient-header">
+        <div class="patient-info">
+          <div class="patient-avatar" id="hdr-avatar"></div>
+          <div class="patient-details">
+            <div class="patient-name-row">
+              <h2 id="hdr-name"></h2>
+              <span class="risk-badge" id="hdr-risk"></span>
+            </div>
+            <div class="patient-meta" id="hdr-meta"></div>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button class="btn-icon" onclick="showUploadModal()" title="Upload new report">📤</button>
+          <button class="btn-icon" onclick="showApiModal()" title="Configure AI">⚙️</button>
+          <button class="btn-print" onclick="window.print()">🖨&nbsp; Print Brief</button>
+        </div>
+      </div>
+
+      <!-- AI Processing Pipeline -->
+      <div id="pipeline-container">
+        <div class="pipeline-label">AI Intelligence Pipeline</div>
+        <div id="pipeline" class="pipeline">
+          <div class="pipe-step" id="pipe-pdf">
+            <div class="pipe-icon">📄</div>
+            <div class="pipe-name">PDF</div>
+          </div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-step" id="pipe-ocr">
+            <div class="pipe-icon">🔍</div>
+            <div class="pipe-name">OCR</div>
+          </div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-step" id="pipe-entities">
+            <div class="pipe-icon">🧬</div>
+            <div class="pipe-name">Entities</div>
+          </div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-step" id="pipe-timeline">
+            <div class="pipe-icon">📅</div>
+            <div class="pipe-name">Timeline</div>
+          </div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-step" id="pipe-changes">
+            <div class="pipe-icon">📊</div>
+            <div class="pipe-name">Changes</div>
+          </div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-step" id="pipe-risk">
+            <div class="pipe-icon">🚨</div>
+            <div class="pipe-name">Risk</div>
+          </div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-step" id="pipe-gemini">
+            <div class="pipe-icon">✨</div>
+            <div class="pipe-name">Gemini</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Navigation -->
+      <div id="tab-nav">
+        <button class="tab-btn active" data-tab="overview"
+                onclick="switchTab('overview', this)">
+          <span>📋</span> Overview
+        </button>
+        <button class="tab-btn" data-tab="timeline"
+                onclick="switchTab('timeline', this)">
+          <span>📅</span> Timeline
+        </button>
+        <button class="tab-btn" data-tab="changes"
+                onclick="switchTab('changes', this)">
+          <span>📊</span> Clinical Changes
+        </button>
+        <button class="tab-btn" data-tab="risk"
+                onclick="switchTab('risk', this)">
+          <span>🚨</span> Risk &amp; AI Explain
+        </button>
+        <button class="tab-btn" data-tab="missing"
+                onclick="switchTab('missing', this)">
+          <span>🔬</span> Missing Tests
+        </button>
+      </div>
+
+      <!-- Tab Content Panels -->
+      <div id="tab-content">
+        <div id="tab-overview"  class="tab-panel active"></div>
+        <div id="tab-timeline"  class="tab-panel hidden"></div>
+        <div id="tab-changes"   class="tab-panel hidden"></div>
+        <div id="tab-risk"      class="tab-panel hidden"></div>
+        <div id="tab-missing"   class="tab-panel hidden"></div>
+      </div>
+
+    </div><!-- /patient-view -->
+  </main>
+</div><!-- /app -->
+
+<script src="demo-data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
