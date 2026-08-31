@@ -93,8 +93,8 @@ antigravity_project/
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/divyansh24bce10143-coder/consult360-ai.git
-cd consult360-ai
+git clone https://github.com/divyansh24bce10143-coder/CONSULT-360-AI.git
+cd CONSULT-360-AI
 ```
 
 ### 2. Install Dependencies
