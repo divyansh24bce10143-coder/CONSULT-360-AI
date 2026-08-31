@@ -22,8 +22,9 @@ app.use(express.json({ limit: '10mb' }));
 // Serve the frontend static files from the parent directory
 app.use(express.static(path.join(__dirname, '..')));
 
-// ── API Routes ─────────────────────────────────────────────────────────────
+// ── API Routes (mounted on /api and root for Vercel serverless compatibility) ─
 app.use('/api', analyzeRouter);
+app.use('/', analyzeRouter);
 
 // ── Catch-all: serve index.html for any non-API route ────────────────────
 app.get('*', (req, res) => {
@@ -36,8 +37,8 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: err.message || 'Internal server error' });
 });
 
-// ── Start (local dev only — Vercel uses module.exports below) ─────────────
-if (process.env.NODE_ENV !== 'production' || process.env.LOCAL_DEV) {
+// ── Start (Local dev & standalone containers only — Vercel uses serverless export) ─
+if (!process.env.VERCEL) {
   app.listen(PORT, () => {
     const apiKey = process.env.GEMINI_API_KEY;
     const keyStatus = apiKey && apiKey !== 'your_gemini_api_key_here'
@@ -58,11 +59,6 @@ if (process.env.NODE_ENV !== 'production' || process.env.LOCAL_DEV) {
     console.log('  POST /api/upload   → PDF → text extraction');
     console.log('  POST /api/analyze  → text → AI brief (Gemini)');
     console.log('');
-  });
-} else {
-  // Production: start listening on PORT (Railway, Render etc.)
-  app.listen(PORT, () => {
-    console.log(`🏥 Consult360 AI running on port ${PORT}`);
   });
 }
 
