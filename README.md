@@ -93,7 +93,7 @@ antigravity_project/
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/YOUR_USERNAME/consult360-ai.git
+git clone https://github.com/divyansh24bce10143-coder/consult360-ai.git
 cd consult360-ai
 ```
 
