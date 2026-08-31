@@ -78,6 +78,8 @@ router.post('/upload-and-analyze', upload.array('reports', 10), async (req, res)
     let pdfCount   = 0;
     let imageCount = 0;
 
+    const extractionErrors = [];
+
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       const fileLabel = `${file.originalname} (${i + 1}/${fileCount})`;
@@ -94,48 +96,32 @@ router.post('/upload-and-analyze', upload.array('reports', 10), async (req, res)
           let text = await extractTextFromPdf(file.buffer);
 
           if (isScannedPdf(text)) {
-            // ── Scanned PDF: render pages → Gemini Vision ──────────────
+            // ── Scanned / Visual PDF: Use Gemini Multimodal PDF engine directly ──
             sendEvent(res, 'progress', {
               step: 'ocr',
-              label: `🔍 Scanned PDF detected — using Vision AI on ${fileLabel}`,
-              percent: 18 + Math.round((i / fileCount) * 25)
+              label: `🔍 Scanned / Visual PDF detected — processing with Gemini Vision AI...`,
+              percent: 20 + Math.round((i / fileCount) * 25)
             });
 
-            const pages = await renderScannedPdfToImages(file.buffer);
-            let combinedPageText = '';
-
-            for (const { buffer: pageBuffer, pageNum } of pages) {
-              sendEvent(res, 'progress', {
-                step: 'ocr',
-                label: `🔍 Reading page ${pageNum}/${pages.length} of ${file.originalname}...`,
-                percent: 20
-              });
-              const { text: pageText } = await extractTextFromImage(
-                pageBuffer,
-                `page_${pageNum}.png`,
-                'image/png'
-              );
-              combinedPageText += `\n[Page ${pageNum}]\n${pageText}`;
-            }
-
-            text = combinedPageText;
+            const visionRes = await extractTextFromImage(
+              file.buffer,
+              file.originalname,
+              'application/pdf'
+            );
+            text = visionRes.text;
           }
 
-          if (text.trim()) {
+          if (text && text.trim()) {
             extractedParts.push(`\n\n=== PDF REPORT: ${file.originalname} ===\n${text}`);
             pdfCount++;
             sendEvent(res, 'progress', {
               step: 'ocr',
               label: `✅ PDF extracted: ${file.originalname}`,
-              percent: 20 + Math.round(((i + 1) / fileCount) * 20),
+              percent: 25 + Math.round(((i + 1) / fileCount) * 20),
               done: false
             });
           } else {
-            sendEvent(res, 'progress', {
-              step: 'ocr',
-              label: `⚠️ ${file.originalname} — could not extract any content`,
-              percent: 20
-            });
+            throw new Error(`PDF contains no extractable text or images.`);
           }
 
         } else if (file.mimetype === 'text/plain') {
@@ -179,25 +165,24 @@ router.post('/upload-and-analyze', upload.array('reports', 10), async (req, res)
 
       } catch (fileErr) {
         console.error(`[Route] Error on ${file.originalname}:`, fileErr.message);
+        extractionErrors.push(`${file.originalname}: ${fileErr.message}`);
         sendEvent(res, 'progress', {
           step: 'ocr',
           label: `⚠️ ${file.originalname}: ${fileErr.message}`,
           percent: 20
         });
-        // For images, propagate vision errors so user knows what happened
-        if (isImage(file.mimetype)) {
-          sendEvent(res, 'error', {
-            message: `Image processing failed for "${file.originalname}": ${fileErr.message}`
-          });
-          return res.end();
-        }
       }
     }
 
     if (extractedParts.length === 0) {
-      sendEvent(res, 'error', { message: 'Could not extract text from any uploaded file.' });
+      sendEvent(res, 'error', {
+        message: extractionErrors.length > 0
+          ? extractionErrors.join(' • ')
+          : 'Could not extract text from any uploaded file. Please ensure the file is not corrupted.'
+      });
       return res.end();
     }
+
 
     // ── Combine all extracted content ──────────────────────────────────────
     const rawCombined = extractedParts.join('');
