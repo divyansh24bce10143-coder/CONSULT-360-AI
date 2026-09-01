@@ -520,9 +520,36 @@ function renderOverview(r) {
         </div>
       </div>
 
+      <!-- Live Active Encounter Chart Records & Order Sheet -->
+      <div class="clinical-card" style="padding:18px;border-left:4px solid var(--clinical-blue)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border-light)">
+          <div style="display:flex;align-items:center;gap:10px">
+            <h3 class="card-heading">📋 Active Encounter Chart Records &amp; Orders Log</h3>
+            <span class="table-badge" id="inline-chart-count">0 items recorded</span>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn-clinical-outline" onclick="copyChartRecordText()">
+              <span>📋</span> Copy to Clipboard (EHR)
+            </button>
+            <button class="btn-clinical-primary" onclick="openChartRecordsModal()">
+              <span>🔍</span> Open Full Chart View
+            </button>
+          </div>
+        </div>
+        <div id="inline-chart-record-container">
+          <p style="font-size:12.5px;color:var(--text-muted);font-style:italic">
+            Check off any Physician Directive above or click "[✓ Accept &amp; Order]" on risk signals to log orders and actions into this patient's chart record.
+          </p>
+        </div>
+      </div>
+
     </div>
   `;
+
+  // Render the initial inline chart log
+  renderInlineChartLog();
 }
+
 
 // ── Patient Chart Records & Orders Management ──────────────────────────────
 const patientChartRecords = {};
@@ -553,7 +580,70 @@ function updateChartCounterBadge() {
   const chart = getPatientChart(patientId);
   const totalItems = chart.orders.length + chart.directives.length + chart.referrals.length;
   badge.textContent = totalItems;
+
+  renderInlineChartLog();
 }
+
+function renderInlineChartLog() {
+  const patientId = state.currentPatientId;
+  const container = document.getElementById('inline-chart-record-container');
+  const countEl = document.getElementById('inline-chart-count');
+  if (!container) return;
+
+  const chart = getPatientChart(patientId || 'P001');
+  const totalItems = chart.orders.length + chart.directives.length + chart.referrals.length;
+
+  if (countEl) countEl.textContent = `${totalItems} item${totalItems !== 1 ? 's' : ''} recorded`;
+
+  if (totalItems === 0) {
+    container.innerHTML = `
+      <p style="font-size:12.5px;color:var(--text-muted);font-style:italic">
+        Check off any Physician Directive above or click "[✓ Accept &amp; Order]" on risk signals to log orders and actions into this patient's chart record.
+      </p>
+    `;
+    return;
+  }
+
+  const itemsHtml = [];
+
+  chart.orders.forEach(o => {
+    itemsHtml.push(`
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg-subtle);border:1px solid var(--border-light);border-radius:var(--radius-md);margin-bottom:6px">
+        <span style="font-weight:600;font-size:12.5px;color:var(--navy-900)">🔬 ${o.title}</span>
+        <span style="font-size:11px;font-family:var(--font-mono);color:var(--text-muted)">${o.time} · Order Placed</span>
+      </div>
+    `);
+  });
+
+  chart.directives.forEach(d => {
+    itemsHtml.push(`
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:var(--radius-md);margin-bottom:6px">
+        <span style="font-size:12.5px;color:#065f46;font-weight:600">✓ ${d.text}</span>
+        <span style="font-size:11px;font-family:var(--font-mono);color:#047857">${d.time} · Logged</span>
+      </div>
+    `);
+  });
+
+  chart.referrals.forEach(r => {
+    itemsHtml.push(`
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:var(--radius-md);margin-bottom:6px">
+        <span style="font-weight:600;font-size:12.5px;color:#1e40af">⚑ ${r.title}</span>
+        <span style="font-size:11px;font-family:var(--font-mono);color:#2563eb">${r.time} · Dispatched</span>
+      </div>
+    `);
+  });
+
+  container.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px">
+      ${itemsHtml.join('')}
+    </div>
+    <div style="font-size:11px;color:var(--text-muted);display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border-light);padding-top:6px">
+      <span>Authenticated by <strong>Dr. Sarah Chen, MD</strong></span>
+      <span style="color:var(--status-success);font-weight:600">✓ Chart Synchronized</span>
+    </div>
+  `;
+}
+
 
 function toggleDirective(idx) {
   const chk = document.getElementById(`dir-${idx}`);
@@ -773,7 +863,7 @@ function renderChanges(changes) {
         </div>
 
         <div class="delta-card-footer">
-          <span><strong>$\Delta$ Shift:</strong> ${c.magnitude}</span>
+          <span><strong>Δ Shift:</strong> ${c.magnitude}</span>
           <span><strong>Assessment:</strong> ${c.clinicalSignificance}</span>
         </div>
       </div>
@@ -782,7 +872,7 @@ function renderChanges(changes) {
 
   document.getElementById('tab-changes').innerHTML = `
     <div style="margin-bottom:16px">
-      <h2 class="card-heading">Longitudinal Clinical Delta ($\Delta$) Analysis</h2>
+      <h2 class="card-heading">Longitudinal Clinical Delta (Δ) Analysis</h2>
       <p style="font-size:12.5px;color:var(--text-secondary)">Multi-encounter biometric shifts and trend trajectories.</p>
     </div>
     <div class="delta-grid-container">${cardsHtml || '<p style="color:var(--text-muted)">No biomarker shifts detected.</p>'}</div>
