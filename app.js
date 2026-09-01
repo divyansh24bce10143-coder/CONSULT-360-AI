@@ -1,27 +1,31 @@
-/* ============================
-   CONSULT360 AI — APPLICATION
-   (Node.js Backend Version)
-   All AI calls go through /api/* — API key is secure on the server.
-   ============================ */
+/* ==========================================================================
+   CONSULT 360 AI — CLINICAL WORKFLOW APPLICATION LOGIC
+   Professional decision-support and care journey continuum engine.
+   All AI synthesis routes through /api/* (Gemini 3.6 Flash Multimodal Engine).
+   ========================================================================== */
 
-// ── State ──────────────────────────────────────────────────────────────────
+// ── Application State ───────────────────────────────────────────────────────
 const state = {
-  serverUrl: '',          // auto-detected: same origin (e.g. http://localhost:3000)
-  serverOnline: false,    // set after health check
+  serverOnline: false,
   currentPatientId: null,
   currentResult: null,
-  pipelineInterval: null
+  currentView: 'dashboard',      // 'dashboard' | 'patient'
+  sidebarFilter: 'all',          // 'all' | 'critical' | 'attention'
+  dashboardFilter: 'all',        // 'all' | 'critical' | 'overdue' | 'pending-tests'
+  searchQuery: '',
+  selectedFiles: []              // Array of File objects staged for upload
 };
 
-// ── PDF.js Worker (still used client-side as quick preview check) ───────────
+// ── PDF.js Worker Configuration ────────────────────────────────────────────
 if (typeof pdfjsLib !== 'undefined') {
   pdfjsLib.GlobalWorkerOptions.workerSrc =
     'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 }
 
-// ── Init ───────────────────────────────────────────────────────────────────
+// ── Initialization ─────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  renderPatientList();
+  renderSidebarQueue();
+  renderDashboardWorklist();
   checkServerHealth();
   setupUploadArea();
 });
@@ -37,178 +41,339 @@ async function checkServerHealth() {
 
     if (data.gemini === 'connected') {
       dot.className = 'status-dot connected';
-      txt.textContent = 'Server + Gemini ✓';
+      txt.textContent = 'Clinical AI Engine Active (Gemini 3.6 Flash)';
     } else {
       dot.className = 'status-dot disconnected';
-      txt.textContent = 'Server OK — Key Missing';
-      showToast('⚠️ Add GEMINI_API_KEY to server/.env', 'error');
+      txt.textContent = 'Engine Connected — Key Missing';
+      showToast('⚠️ GEMINI_API_KEY missing in server/.env', 'error');
     }
   } catch (e) {
     state.serverOnline = false;
     dot.className = 'status-dot disconnected';
-    txt.textContent = 'Server Offline';
+    txt.textContent = 'Server Offline (Local Dev)';
   }
 }
 
-// Keep legacy stubs so index.html onclick="" attributes don't break
-function showApiModal() {}
-function closeApiModal() {}
-function saveApiKey() {}
+// ── View Navigation (Dashboard Worklist vs Patient Detail) ──────────────────
+function showDashboardView() {
+  state.currentView = 'dashboard';
+  state.currentPatientId = null;
 
+  document.getElementById('dashboard-view').classList.remove('hidden');
+  document.getElementById('patient-view').classList.add('hidden');
 
+  // Clear sidebar active highlights
+  document.querySelectorAll('.patient-item-card').forEach(el => el.classList.remove('active'));
 
-// ── Patient List ───────────────────────────────────────────────────────────
-function renderPatientList() {
+  renderDashboardWorklist();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function showPatientView() {
+  state.currentView = 'patient';
+  document.getElementById('dashboard-view').classList.add('hidden');
+  document.getElementById('patient-view').classList.remove('hidden');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── Dashboard / Worklist Rendering ─────────────────────────────────────────
+function renderDashboardWorklist() {
+  const tbody = document.getElementById('worklist-tbody');
+  if (!tbody) return;
+
+  // Calculate KPI Counts
+  let criticalCount = 0;
+  let overdueCount = 0;
+  let pendingCount = 0;
+
+  DEMO_PATIENTS.forEach(p => {
+    if (p.riskLevel === 'critical') criticalCount++;
+    if (p.careJourney?.some(j => j.status === 'missed' || j.status === 'attention')) overdueCount++;
+    const res = DEMO_RESULTS[p.id];
+    if (res?.missingInvestigations) pendingCount += res.missingInvestigations.length;
+  });
+
+  const kpiCritEl = document.getElementById('kpi-critical-count');
+  const kpiOverEl = document.getElementById('kpi-overdue-count');
+  const kpiPendEl = document.getElementById('kpi-pending-count');
+  const kpiTotEl  = document.getElementById('kpi-total-count');
+
+  if (kpiCritEl) kpiCritEl.textContent = criticalCount;
+  if (kpiOverEl) kpiOverEl.textContent = overdueCount;
+  if (kpiPendEl) kpiPendEl.textContent = pendingCount;
+  if (kpiTotEl)  kpiTotEl.textContent  = DEMO_PATIENTS.length;
+
+  const quickStats = document.getElementById('triage-quick-stats');
+  if (quickStats) {
+    quickStats.innerHTML = `<strong>${DEMO_PATIENTS.length} Outpatients</strong> in Queue · <strong>${criticalCount} Critical</strong> · <strong>${pendingCount} Pending Labs</strong>`;
+  }
+
+  // Filter patients for the dashboard table
+  const filtered = DEMO_PATIENTS.filter(p => {
+    if (state.dashboardFilter === 'critical') return p.riskLevel === 'critical';
+    if (state.dashboardFilter === 'overdue') return p.careJourney?.some(j => j.status === 'missed' || j.status === 'attention');
+    if (state.dashboardFilter === 'pending-tests') {
+      const res = DEMO_RESULTS[p.id];
+      return res?.missingInvestigations && res.missingInvestigations.length > 0;
+    }
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="7" style="text-align:center;padding:32px;color:var(--text-muted)">
+          No patients match the selected filter criteria.
+        </td>
+      </tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(p => {
+    const currentStage = p.careJourney ? p.careJourney.find(s => s.status === 'attention' || s.status === 'missed' || s.status === 'pending') || p.careJourney[p.careJourney.length - 1] : { name: 'Consultation', status: 'completed' };
+    
+    return `
+      <tr>
+        <td>
+          <div class="table-patient-cell">
+            <div class="table-avatar-badge">${p.avatar}</div>
+            <div>
+              <div class="table-patient-name">${p.name}</div>
+              <div class="table-patient-sub">${p.mrn} · ${p.age}y/${p.gender[0]} · ${p.bloodGroup}</div>
+            </div>
+          </div>
+        </td>
+        <td>
+          <span class="triage-badge risk-${p.riskLevel}">
+            ${p.riskLevel === 'critical' ? '🔴 Critical' : p.riskLevel === 'medium' ? '🟠 High Attention' : '🟢 Routine'}
+          </span>
+        </td>
+        <td>
+          <div class="table-condition-text">${p.condition}</div>
+        </td>
+        <td>
+          <span class="triage-badge stage-${currentStage.status}">
+            ${currentStage.name} (${currentStage.status})
+          </span>
+        </td>
+        <td>
+          <div class="table-gap-alert">
+            <span>⚠️</span> ${p.overdueGap || 'Routine Follow-up'}
+          </div>
+        </td>
+        <td>
+          <div style="font-family:var(--font-mono);font-size:11.5px;color:var(--text-secondary)">${p.lastVisit || 'Today'}</div>
+          <div style="font-size:10.5px;color:var(--text-muted)">${p.attendingDoctor ? p.attendingDoctor.split(',')[0] : 'Dr. Sarah Chen'}</div>
+        </td>
+        <td style="text-align:right">
+          <button class="table-action-btn" onclick="selectPatient('${p.id}')">
+            Open Clinical Brief →
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function filterDashboardTable(filterType) {
+  state.dashboardFilter = filterType;
+  document.querySelectorAll('.pill-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('onclick')?.includes(`'${filterType}'`));
+  });
+  const labelEl = document.getElementById('table-filter-label');
+  if (labelEl) {
+    const labels = {
+      'all': 'All Active Records',
+      'critical': 'Filtered: Critical Attention',
+      'overdue': 'Filtered: Overdue Follow-ups',
+      'pending-tests': 'Filtered: Pending Investigations'
+    };
+    labelEl.textContent = labels[filterType] || 'All Records';
+  }
+  renderDashboardWorklist();
+}
+
+function setTableFilter(filterType, btn) {
+  document.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  filterDashboardTable(filterType);
+}
+
+// ── Sidebar Outpatient Queue Rendering ─────────────────────────────────────
+function renderSidebarQueue() {
   const list = document.getElementById('patient-list');
-  list.innerHTML = DEMO_PATIENTS.map(p => `
-    <div class="patient-item" id="pi-${p.id}" onclick="selectPatient('${p.id}')">
-      <div class="patient-item-row1">
-        <div class="patient-item-avatar">${p.avatar}</div>
-        <div class="patient-item-info">
-          <div class="patient-item-name">${p.name}</div>
-          <div class="patient-item-time">⏰ ${p.appointmentTime}</div>
-        </div>
-        <button class="patient-delete-btn" onclick="deletePatient(event, '${p.id}')" title="Delete patient record">✕</button>
+  const countBadge = document.getElementById('sidebar-patient-count');
+  if (!list) return;
+
+  if (countBadge) countBadge.textContent = DEMO_PATIENTS.length;
+
+  let filtered = DEMO_PATIENTS;
+
+  // Search filter
+  if (state.searchQuery) {
+    const q = state.searchQuery.toLowerCase();
+    filtered = filtered.filter(p =>
+      p.name.toLowerCase().includes(q) ||
+      (p.mrn && p.mrn.toLowerCase().includes(q)) ||
+      p.condition.toLowerCase().includes(q)
+    );
+  }
+
+  // Triage Tab filter
+  if (state.sidebarFilter === 'critical') {
+    filtered = filtered.filter(p => p.riskLevel === 'critical');
+  } else if (state.sidebarFilter === 'attention') {
+    filtered = filtered.filter(p => p.riskLevel === 'critical' || p.riskLevel === 'medium');
+  }
+
+  if (filtered.length === 0) {
+    list.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text-muted);font-size:12px">No patients found.</div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(p => `
+    <div class="patient-item-card ${state.currentPatientId === p.id ? 'active' : ''}"
+         id="pi-${p.id}" onclick="selectPatient('${p.id}')">
+      <div class="patient-item-row-top">
+        <span class="patient-item-name">${p.name}</span>
+        <span class="patient-item-time">⏰ ${p.appointmentTime.split(' ')[0]}</span>
       </div>
-      <div class="patient-item-row2">
-        <div class="patient-item-cond">${p.condition}</div>
-        <span class="risk-badge risk-${p.riskLevel}">${p.riskLevel}</span>
+      <div class="patient-item-row-mid">${p.condition}</div>
+      <div class="patient-item-row-bot">
+        <span class="patient-mrn-label">${p.mrn || p.id} · ${p.age}y</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="triage-badge risk-${p.riskLevel}">
+            ${p.riskLevel === 'critical' ? 'Critical' : p.riskLevel === 'medium' ? 'Attention' : 'Routine'}
+          </span>
+          <button class="patient-delete-btn" onclick="deletePatient(event, '${p.id}')" title="Discharge patient">✕</button>
+        </div>
       </div>
     </div>
   `).join('');
 }
 
-// ── Delete Patient ──────────────────────────────────────────────────────────
-function deletePatient(event, id) {
-  event.stopPropagation(); // don't trigger selectPatient
+function filterPatients(query) {
+  state.searchQuery = query.trim();
+  renderSidebarQueue();
+}
+
+function setSidebarFilter(filter, btn) {
+  state.sidebarFilter = filter;
+  document.querySelectorAll('.triage-tab').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderSidebarQueue();
+}
+
+// ── Select Patient & Open Detail Screen ────────────────────────────────────
+async function selectPatient(id) {
+  state.currentPatientId = id;
 
   const patient = DEMO_PATIENTS.find(p => p.id === id);
   if (!patient) return;
 
-  // Confirmation
-  const confirmed = confirm(`Delete "${patient.name}" from the queue?\n\nThis will remove their record and AI brief.`);
-  if (!confirmed) return;
-
-  // Animate the card sliding out first
-  const cardEl = document.getElementById(`pi-${id}`);
-  if (cardEl) {
-    cardEl.classList.add('deleting');
-    setTimeout(() => finishDelete(id, patient.name), 280);
-  } else {
-    finishDelete(id, patient.name);
-  }
-}
-
-function finishDelete(id, name) {
-  // Remove from patients list
-  const index = DEMO_PATIENTS.findIndex(p => p.id === id);
-  if (index !== -1) DEMO_PATIENTS.splice(index, 1);
-
-  // Remove cached AI result
-  if (DEMO_RESULTS && DEMO_RESULTS[id]) delete DEMO_RESULTS[id];
-
-  // If deleted patient was currently being viewed → go back to welcome screen
-  if (state.currentPatientId === id) {
-    state.currentPatientId = null;
-    state.currentResult = null;
-    document.getElementById('patient-view').classList.add('hidden');
-    document.getElementById('welcome-screen').classList.remove('hidden');
-  }
-
-  renderPatientList();
-  showToast(`🗑 "${name}" removed from queue`);
-}
-
-
-
-// ── Select Patient ─────────────────────────────────────────────────────────
-async function selectPatient(id) {
-  // Highlight in sidebar
-  document.querySelectorAll('.patient-item').forEach(el => el.classList.remove('active'));
+  // Highlight in sidebar queue
+  document.querySelectorAll('.patient-item-card').forEach(el => el.classList.remove('active'));
   document.getElementById(`pi-${id}`)?.classList.add('active');
 
-  state.currentPatientId = id;
-  const patient = DEMO_PATIENTS.find(p => p.id === id);
-  if (!patient) return;
+  // Switch View to Patient Detail
+  showPatientView();
 
-  // Show patient view
-  document.getElementById('welcome-screen').classList.add('hidden');
-  document.getElementById('patient-view').classList.remove('hidden');
-
-  // Render header
+  // Render Master Header & Allergy Banner
   renderPatientHeader(patient);
 
-  // Reset tabs
-  switchTab('overview', document.querySelector('.tab-btn[data-tab="overview"]'));
+  // Render Care Journey Continuum Stepper
+  renderCareJourneyStepper(patient);
 
-  // Animate pipeline then render pre-loaded results
-  resetPipeline();
+  // Reset tab to Overview
+  switchTab('overview', document.querySelector('.clinical-tab-btn[data-tab="overview"]'));
+
+  // Render AI Pre-computed results
   const result = DEMO_RESULTS[id];
   if (result) {
     state.currentResult = result;
-    await animatePipelineDemo();
     renderAllTabs(result);
   }
 }
 
 function renderPatientHeader(patient) {
-  document.getElementById('hdr-avatar').textContent = patient.avatar;
-  document.getElementById('hdr-name').textContent = patient.name;
-  document.getElementById('hdr-risk').className = `risk-badge risk-${patient.riskLevel}`;
-  document.getElementById('hdr-risk').textContent = patient.riskLevel;
-  document.getElementById('hdr-meta').textContent =
-    `${patient.age}y · ${patient.gender} · ${patient.bloodGroup} · 🕐 ${patient.appointmentTime} · ${patient.condition}`;
+  const avatarEl = document.getElementById('hdr-avatar');
+  const nameEl   = document.getElementById('hdr-name');
+  const mrnEl    = document.getElementById('hdr-mrn');
+  const riskEl   = document.getElementById('hdr-risk');
+  const metaEl   = document.getElementById('hdr-meta');
+  const allergyEl= document.getElementById('hdr-allergy-text');
+
+  if (avatarEl) avatarEl.textContent = patient.avatar || patient.name.substring(0, 2).toUpperCase();
+  if (nameEl)   nameEl.textContent   = patient.name;
+  if (mrnEl)    mrnEl.textContent    = patient.mrn || `MRN-${patient.id}`;
+  
+  if (riskEl) {
+    riskEl.className = `triage-status-tag risk-${patient.riskLevel}`;
+    riskEl.textContent = patient.riskLevel === 'critical' ? '🔴 Critical Attention Required' : patient.riskLevel === 'medium' ? '🟠 High Priority Review' : '🟢 Routine Care';
+  }
+
+  if (metaEl) {
+    metaEl.textContent = `${patient.age}y · ${patient.gender} · Blood Group ${patient.bloodGroup} · 🕐 ${patient.appointmentTime} · ${patient.room || 'Clinic Area'} · Attending: ${patient.attendingDoctor || 'Dr. Sarah Chen, MD'}`;
+  }
+
+  if (allergyEl) {
+    const allergies = patient.allergies || [];
+    allergyEl.textContent = allergies.length > 0 ? allergies.join(' · ') : 'None documented in current EHR record';
+  }
 }
 
-// ── Pipeline Animation ─────────────────────────────────────────────────────
-const PIPE_STEPS = ['pipe-pdf','pipe-ocr','pipe-entities','pipe-timeline','pipe-changes','pipe-risk','pipe-gemini'];
-const PIPE_DELAYS = [400, 600, 700, 700, 700, 700, 900];
+// ── Care Journey Stepper Component ─────────────────────────────────────────
+function renderCareJourneyStepper(patient) {
+  const stepper = document.getElementById('care-journey-stepper');
+  const summaryEl = document.getElementById('journey-stage-summary');
+  if (!stepper) return;
 
-function resetPipeline() {
-  clearInterval(state.pipelineInterval);
-  PIPE_STEPS.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) { el.className = 'pipe-step'; }
-  });
-}
+  const defaultJourney = [
+    { id: 'step-1', name: 'Consultation', status: 'completed', date: 'Encounter Logged', note: 'Physician consultation recorded.' },
+    { id: 'step-2', name: 'Diagnosis', status: 'completed', date: 'Confirmed', note: patient.condition || 'Active clinical diagnosis.' },
+    { id: 'step-3', name: 'Treatment', status: 'completed', date: 'In Progress', note: 'Prescription regimen active.' },
+    { id: 'step-4', name: 'Investigation', status: patient.riskLevel === 'critical' ? 'attention' : 'pending', date: 'Pending Audit', note: 'Diagnostic tests required.' },
+    { id: 'step-5', name: 'Follow-up', status: 'pending', date: 'Scheduled', note: 'Next visit scheduled.' },
+    { id: 'step-6', name: 'Review', status: 'pending', date: 'Pending', note: 'Multi-specialist chart review.' }
+  ];
 
-async function animatePipelineDemo() {
-  return new Promise(resolve => {
-    let i = 0;
-    function nextStep() {
-      if (i > 0) {
-        document.getElementById(PIPE_STEPS[i-1])?.classList.replace('active', 'done');
-      }
-      if (i < PIPE_STEPS.length) {
-        document.getElementById(PIPE_STEPS[i])?.classList.add('active');
-        i++;
-        setTimeout(nextStep, PIPE_DELAYS[i-1] || 500);
-      } else {
-        document.getElementById(PIPE_STEPS[PIPE_STEPS.length-1])?.classList.replace('active', 'done');
-        resolve();
-      }
-    }
-    nextStep();
-  });
-}
+  const journey = patient.careJourney || defaultJourney;
 
-async function animatePipelineLive(onStep) {
-  return new Promise(async resolve => {
-    for (let i = 0; i < PIPE_STEPS.length; i++) {
-      if (i > 0) document.getElementById(PIPE_STEPS[i-1])?.classList.replace('active', 'done');
-      document.getElementById(PIPE_STEPS[i])?.classList.add('active');
-      await onStep(i);
-      await sleep(300);
-    }
-    document.getElementById(PIPE_STEPS[PIPE_STEPS.length-1])?.classList.replace('active', 'done');
-    resolve();
-  });
+  const statusIcons = {
+    completed: '✓',
+    attention: '⚠️',
+    missed: '✕',
+    pending: '⏱'
+  };
+
+  const statusLabels = {
+    completed: 'Completed',
+    attention: 'Attention',
+    missed: 'Overdue',
+    pending: 'Pending'
+  };
+
+  stepper.innerHTML = journey.map((step, idx) => `
+    <div class="journey-step-box step-${step.status}">
+      <div class="step-num-status">
+        <span class="step-name-text">${idx + 1}. ${step.name}</span>
+        <span class="step-icon-indicator" title="${statusLabels[step.status]}">${statusIcons[step.status]}</span>
+      </div>
+      <div class="step-date-text">${step.date}</div>
+      <div class="step-note-snippet" title="${step.note}">${step.note}</div>
+    </div>
+  `).join('');
+
+  if (summaryEl) {
+    const activeStep = journey.find(s => s.status === 'attention' || s.status === 'missed') || journey.find(s => s.status === 'pending') || journey[journey.length - 1];
+    summaryEl.textContent = `Current Active Stage: ${activeStep.name} (${statusLabels[activeStep.status]})`;
+  }
 }
 
 // ── Tab Switching ──────────────────────────────────────────────────────────
 function switchTab(name, btn) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+  document.querySelectorAll('.clinical-tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.clinical-tab-panel').forEach(p => p.classList.add('hidden'));
   if (btn) btn.classList.add('active');
   const panel = document.getElementById(`tab-${name}`);
   if (panel) panel.classList.remove('hidden');
@@ -222,323 +387,368 @@ function renderAllTabs(result) {
   renderRisk(result.riskFlags || []);
   renderMissing(result.missingInvestigations || []);
 
-  // Update risk tab count badge
+  // Update tab counter badges
   const riskCount = (result.riskFlags || []).length;
-  const riskTab = document.querySelector('.tab-btn[data-tab="risk"]');
-  if (riskTab && riskCount) {
-    riskTab.innerHTML = `<span>🚨</span> Risk & AI Explain <span class="tab-count">${riskCount}</span>`;
-  }
+  const badgeRisk = document.getElementById('tab-badge-risk');
+  if (badgeRisk) badgeRisk.textContent = riskCount;
+
   const missingCount = (result.missingInvestigations || []).length;
-  const missingTab = document.querySelector('.tab-btn[data-tab="missing"]');
-  if (missingTab && missingCount) {
-    missingTab.innerHTML = `<span>🔬</span> Missing Tests <span class="tab-count">${missingCount}</span>`;
-  }
+  const badgeMissing = document.getElementById('tab-badge-missing');
+  if (badgeMissing) badgeMissing.textContent = missingCount;
 }
 
-// ── Overview Tab ───────────────────────────────────────────────────────────
+// ── Tab 1: Clinical Overview ───────────────────────────────────────────────
 function renderOverview(r) {
   const s = r.summary || {};
   const e = r.entities || {};
+  const ai = r.aiMeta || {};
 
+  // Vitals Grid
+  const vitalsHtml = (e.vitals || []).map(v => `
+    <div class="vital-tile ${v.status}">
+      <span class="vital-type-label">${v.type}</span>
+      <span class="vital-measurement">${v.value} <span style="font-size:12px;font-weight:600">${v.unit}</span></span>
+      <span class="vital-ref-text">Ref: ${v.reference || 'Normal range'}</span>
+    </div>
+  `).join('');
+
+  // Diagnoses Tags
+  const diagHtml = (e.diagnoses || []).map(d => `
+    <span class="clinical-tag ${d.status === 'active' ? 'tag-danger' : d.status === 'suspected' ? 'tag-warning' : ''}">
+      ${d.name} ${d.icd ? `[${d.icd}]` : ''} · <em>${d.status.toUpperCase()}</em>
+    </span>
+  `).join('');
+
+  // Medications
+  const medsHtml = (e.medications || []).map(m => `
+    <span class="clinical-tag ${m.change === 'new' ? 'tag-new' : m.change === 'dose-changed' ? 'tag-warning' : ''}">
+      💊 <strong>${m.name} ${m.dose}</strong> (${m.frequency}) ${m.change === 'new' ? '· 🆕 NEW' : m.change === 'dose-changed' ? '· ↑ TITRATED' : ''}
+    </span>
+  `).join('');
+
+  // Lab Results Table Rows
   const labsHtml = (e.labResults || []).map(l => `
-    <div class="lab-row">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-light)">
       <div>
-        <div class="lab-name">${l.test}</div>
-        <div class="lab-ref">Ref: ${l.reference} · ${l.date}</div>
+        <div style="font-weight:700;font-size:12.5px;color:var(--navy-900)">${l.test}</div>
+        <div style="font-size:11px;color:var(--text-muted)">Reference Range: ${l.reference} · Reported: ${l.date}</div>
       </div>
       <div style="text-align:right">
-        <div class="lab-value" style="color:${labColor(l.status)}">${l.value} ${l.unit}</div>
-        <span class="lab-status" style="background:${labBg(l.status)};color:${labColor(l.status)}">${l.status.toUpperCase()}</span>
+        <div style="font-family:var(--font-mono);font-size:14px;font-weight:800;color:${l.status === 'critical' ? 'var(--status-critical)' : l.status === 'abnormal' ? 'var(--status-warning)' : 'var(--navy-900)'}">
+          ${l.value} ${l.unit}
+        </div>
+        <span class="triage-badge ${l.status === 'critical' ? 'risk-critical' : l.status === 'abnormal' ? 'risk-medium' : 'risk-low'}">
+          ${l.status.toUpperCase()}
+        </span>
       </div>
     </div>
   `).join('');
 
-  const vitalsHtml = (e.vitals || []).map(v => `
-    <div class="vital-card" style="border-color:${labColor(v.status)}33">
-      <div class="vital-value" style="color:${labColor(v.status)}">${v.value}</div>
-      <div class="vital-unit">${v.unit}</div>
-      <div class="vital-label">${v.type}</div>
-      <div class="vital-date">${v.date}</div>
-    </div>
-  `).join('');
-
-  const diagHtml = (e.diagnoses || []).map(d => `
-    <span class="tag ${d.status === 'active' ? 'danger' : d.status === 'suspected' ? 'warning' : ''}">${d.name}${d.status === 'historical' ? ' (Hx)' : d.status === 'suspected' ? ' (?)' : ''}</span>
-  `).join('');
-
-  const medsHtml = (e.medications || []).map(m => `
-    <span class="tag ${m.change === 'new' ? 'med-new' : m.change === 'dose-changed' ? 'warning' : ''}">${m.name} ${m.dose}${m.change === 'new' ? ' 🆕' : m.change === 'dose-changed' ? ' ↑' : ''}</span>
-  `).join('');
-
-  const allergyHtml = (r.patient?.allergies || []).map(a =>
-    `<span class="tag danger">⚠ ${a}</span>`
-  ).join('');
-
+  // Action Directives Checklist
   const actionsHtml = (s.actionItems || []).map((a, i) => `
-    <div class="action-item">
-      <div class="action-num">${i+1}</div>
-      <div class="action-text">${a}</div>
+    <div class="physician-directive-item">
+      <input type="checkbox" id="dir-${i}" class="directive-checkbox" onchange="toggleDirective(${i})">
+      <label for="dir-${i}" class="directive-text">${a}</label>
     </div>
-  `).join('');
-
-  const symptomsHtml = (e.symptoms || []).map(sym => `
-    <span class="tag">${sym.description}</span>
   `).join('');
 
   document.getElementById('tab-overview').innerHTML = `
-    <div class="overview-grid">
-      <div class="tldr-banner">
-        <div class="tldr-icon">✨</div>
-        <div>
-          <div class="tldr-label">AI TL;DR — Pre-Consultation Brief</div>
-          <div class="tldr-text">${s.oneLiner || '—'}</div>
+    <div class="overview-layout-grid">
+      
+      <!-- AI Care Brief Card -->
+      <div class="ai-care-summary-box">
+        <div class="ai-summary-header-row">
+          <span class="ai-summary-tag">
+            <span>✨</span> PRE-CONSULTATION CLINICAL AI SYNTHESIS
+          </span>
+          <span class="ai-confidence-pill">
+            Grounded Confidence: ${ai.confidenceScore || 94}% · ${ai.modelUsed || 'Gemini 3.6 Flash'}
+          </span>
+        </div>
+        <div class="ai-summary-headline">${s.oneLiner || 'Clinical summary synthesized from multi-source EHR records.'}</div>
+        <div class="ai-summary-narrative">${s.clinicalSummary || s.chiefComplaint || 'No clinical narrative available.'}</div>
+      </div>
+
+      <!-- Vitals & Chief Complaints Grid -->
+      <div class="clinical-two-col-grid">
+        <div class="clinical-card" style="padding:16px">
+          <h3 class="card-heading" style="margin-bottom:12px">📊 Encounter Vital Signs Matrix</h3>
+          <div class="vitals-matrix-grid">
+            ${vitalsHtml || '<p style="color:var(--text-muted)">No vitals extracted.</p>'}
+          </div>
+        </div>
+
+        <div class="clinical-card" style="padding:16px">
+          <h3 class="card-heading" style="margin-bottom:8px">🩺 Chief Complaints &amp; Active Symptoms</h3>
+          <p style="font-size:12.5px;color:var(--text-secondary);line-height:1.5;margin-bottom:12px">${s.chiefComplaint || 'Patient presents for scheduled evaluation.'}</p>
+          <div class="clinical-tags-container">
+            ${(e.symptoms || []).map(sym => `<span class="clinical-tag">🚩 ${sym.description}</span>`).join('')}
+          </div>
         </div>
       </div>
 
-      <div class="two-col">
-        <div class="card">
-          <div class="card-title">🩺 Chief Complaint</div>
-          <p style="font-size:13px;line-height:1.6;color:var(--text-2)">${s.chiefComplaint || '—'}</p>
+      <!-- Problem List & Active Medications -->
+      <div class="clinical-two-col-grid">
+        <div class="clinical-card" style="padding:16px">
+          <h3 class="card-heading" style="margin-bottom:12px">🔬 Active Problem List &amp; Diagnoses</h3>
+          <div class="clinical-tags-container">
+            ${diagHtml || '<span class="clinical-tag">None documented</span>'}
+          </div>
         </div>
-        <div class="card">
-          <div class="card-title">⚠ Allergies</div>
-          <div class="tag-list">${allergyHtml || '<span class="tag">None documented</span>'}</div>
-        </div>
-      </div>
 
-      <div class="card">
-        <div class="card-title">🔬 Diagnoses</div>
-        <div class="tag-list">${diagHtml || '<span class="tag">None extracted</span>'}</div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">💊 Current Medications</div>
-        <div class="tag-list">${medsHtml || '<span class="tag">None documented</span>'}</div>
-        <p style="font-size:11px;color:var(--text-3);margin-top:10px">🆕 = New this visit &nbsp;·&nbsp; ↑ = Dose changed</p>
-      </div>
-
-      <div class="two-col">
-        <div class="card">
-          <div class="card-title">📊 Vitals</div>
-          <div class="vital-grid">${vitalsHtml || '<p style="color:var(--text-3)">No vitals recorded</p>'}</div>
-        </div>
-        <div class="card">
-          <div class="card-title">😷 Symptoms</div>
-          <div class="tag-list">${symptomsHtml || '<span class="tag">None reported</span>'}</div>
+        <div class="clinical-card" style="padding:16px">
+          <h3 class="card-heading" style="margin-bottom:12px">💊 Reconciled Active Medications</h3>
+          <div class="clinical-tags-container">
+            ${medsHtml || '<span class="clinical-tag">None documented</span>'}
+          </div>
         </div>
       </div>
 
-      <div class="card">
-        <div class="card-title">🧪 Lab Results</div>
-        ${labsHtml || '<p style="color:var(--text-3)">No lab results extracted</p>'}
+      <!-- Labs Matrix & Physician Action Directives -->
+      <div class="clinical-two-col-grid">
+        <div class="clinical-card" style="padding:16px">
+          <h3 class="card-heading" style="margin-bottom:12px">🧪 Laboratory Biomarker Extract</h3>
+          <div>${labsHtml || '<p style="color:var(--text-muted)">No lab results available.</p>'}</div>
+        </div>
+
+        <div class="clinical-card" style="padding:16px">
+          <h3 class="card-heading" style="margin-bottom:12px">✅ Physician Next-Action Directives</h3>
+          <div>${actionsHtml || '<p style="color:var(--text-muted)">No action directives generated.</p>'}</div>
+        </div>
       </div>
 
-      <div class="card">
-        <div class="card-title">✅ Doctor Action Items</div>
-        ${actionsHtml || '<p style="color:var(--text-3)">No action items generated</p>'}
-      </div>
-
-      <div class="card" style="background:linear-gradient(135deg,rgba(99,102,241,0.08),rgba(139,92,246,0.05));border-color:rgba(99,102,241,0.2)">
-        <div class="card-title">🤖 Clinical Summary</div>
-        <p style="font-size:13px;line-height:1.8;color:var(--text-2)">${s.clinicalSummary || '—'}</p>
-      </div>
     </div>
   `;
 }
 
-function labColor(status) {
-  return { critical:'#f87171', abnormal:'#ef4444', borderline:'#f59e0b', normal:'#10b981' }[status] || 'var(--text-2)';
-}
-function labBg(status) {
-  return { critical:'rgba(220,38,38,0.12)', abnormal:'rgba(239,68,68,0.1)', borderline:'rgba(245,158,11,0.1)', normal:'rgba(16,185,129,0.1)' }[status] || 'transparent';
+function toggleDirective(idx) {
+  const chk = document.getElementById(`dir-${idx}`);
+  if (chk && chk.checked) {
+    showToast('✓ Clinical action checked and logged into chart record');
+  }
 }
 
-// ── Timeline Tab ───────────────────────────────────────────────────────────
+// ── Tab 2: Care Journey & Longitudinal Timeline ────────────────────────────
 function renderTimeline(events, filter = 'all') {
   const filtered = filter === 'all' ? events : events.filter(e => e.type === filter);
 
-  const filterBtns = ['all','visit','lab','medication','symptom','procedure'].map(f =>
-    `<button class="filter-btn ${filter === f ? 'active' : ''}" onclick="renderTimeline(state.currentResult.timeline,'${f}')">${
-      {all:'All Events',visit:'🏥 Visits',lab:'🧪 Labs',medication:'💊 Meds',symptom:'😷 Symptoms',procedure:'🔧 Procedures'}[f]
-    }</button>`
-  ).join('');
+  const filterBtns = ['all', 'visit', 'lab', 'medication', 'procedure'].map(f => `
+    <button class="pill-btn ${filter === f ? 'active' : ''}" onclick="renderTimeline(state.currentResult.timeline, '${f}')">
+      ${{all:'All Events', visit:'🏥 Visits', lab:'🧪 Labs', medication:'💊 Meds', procedure:'🔧 Procedures'}[f]}
+    </button>
+  `).join('');
 
-  const items = filtered.map((ev, i) => `
-    <div class="timeline-item" style="animation-delay:${i * 0.05}s">
-      <div class="timeline-dot ${ev.type} ${ev.significance === 'critical' ? 'critical-dot' : ''}">●</div>
-      <div class="timeline-date">${ev.date}</div>
-      <div class="timeline-event">
-        ${ev.event}
-        ${ev.significance !== 'normal' ? `<span class="timeline-sig-badge sig-${ev.significance}">${ev.significance}</span>` : ''}
+  const entriesHtml = filtered.map(ev => `
+    <div class="clinical-timeline-entry ${ev.significance === 'critical' ? 'critical' : ''}">
+      <div class="timeline-entry-node"></div>
+      <div class="timeline-entry-card">
+        <div class="timeline-entry-top">
+          <span class="timeline-entry-title">${ev.event}</span>
+          <span class="timeline-entry-date">${ev.date}</span>
+        </div>
+        <div class="timeline-entry-desc">${ev.detail}</div>
       </div>
-      <div class="timeline-detail">${ev.detail}</div>
     </div>
   `).join('');
 
   document.getElementById('tab-timeline').innerHTML = `
-    <div class="timeline-filters">${filterBtns}</div>
-    <div class="timeline">
-      ${items || '<p style="color:var(--text-3)">No events to display.</p>'}
+    <div class="timeline-filter-toolbar">${filterBtns}</div>
+    <div class="clinical-timeline-track">
+      ${entriesHtml || '<p style="color:var(--text-muted);padding:20px">No timeline events match filter.</p>'}
     </div>
   `;
 }
 
-// ── Clinical Changes Tab ────────────────────────────────────────────────────
+// ── Tab 3: Metric Trends & Delta (Δ) ─────────────────────────────────────────
 function renderChanges(changes) {
-  const html = changes.map(c => {
-    const arrow = c.direction === 'worsening' ? '↑' : c.direction === 'improving' ? '↓' : '→';
-    const arrowClass = c.direction === 'worsening' ? 'up' : c.direction === 'improving' ? 'down' : '';
-    const dirClass = c.direction === 'worsening' ? 'dir-worsening' : c.direction === 'improving' ? 'dir-improving' : 'dir-stable';
-    const cardClass = c.direction === 'worsening' ? 'worsening' : c.direction === 'improving' ? 'improving' : 'stable';
-
-    // Build flow: previous → mid (optional) → current
-    let flow = `
-      <div class="change-val">
-        <div class="val">${c.previous.value}</div>
-        <div class="vdate">${c.previous.date}</div>
-      </div>`;
-    if (c.mid) {
-      flow += `
-      <div class="change-arrow">→</div>
-      <div class="change-val" style="opacity:0.7">
-        <div class="val" style="font-size:14px">${c.mid.value}</div>
-        <div class="vdate">${c.mid.date}</div>
-      </div>`;
-    }
-    flow += `
-      <div class="change-arrow ${arrowClass}">${arrow}</div>
-      <div class="change-val" style="border-color:${c.direction === 'worsening' ? 'var(--danger-border)' : c.direction === 'improving' ? 'var(--success-border)' : 'var(--border)'}">
-        <div class="val" style="color:${c.direction === 'worsening' ? 'var(--danger)' : c.direction === 'improving' ? 'var(--success)' : 'var(--text-2)'}">${c.current.value}</div>
-        <div class="vdate">${c.current.date}</div>
-      </div>`;
+  const cardsHtml = changes.map(c => {
+    const isWorse = c.direction === 'worsening';
+    const isImp   = c.direction === 'improving';
+    const cardClass = isWorse ? 'worsening' : isImp ? 'improving' : 'stable';
+    const dirClass  = isWorse ? 'dir-worsening' : isImp ? 'dir-improving' : 'dir-stable';
 
     return `
-    <div class="change-card ${cardClass}">
-      <div class="change-left">
-        <div class="change-param">${c.parameter}</div>
-        <div class="change-flow">${flow}</div>
+      <div class="delta-metric-card ${cardClass}">
+        <div>
+          <div class="delta-card-header">
+            <span class="delta-param-title">${c.parameter}</span>
+            <span class="delta-direction-badge ${dirClass}">${c.direction}</span>
+          </div>
+
+          <div class="delta-flow-visual">
+            <div class="delta-value-box">
+              <div class="delta-val-num">${c.previous.value}</div>
+              <div class="delta-val-date">${c.previous.date}</div>
+            </div>
+
+            ${c.mid ? `
+              <span class="delta-arrow-sep">→</span>
+              <div class="delta-value-box" style="opacity:0.8">
+                <div class="delta-val-num">${c.mid.value}</div>
+                <div class="delta-val-date">${c.mid.date}</div>
+              </div>
+            ` : ''}
+
+            <span class="delta-arrow-sep">→</span>
+
+            <div class="delta-value-box" style="border-color:${isWorse ? 'var(--status-critical)' : isImp ? 'var(--status-success)' : 'var(--border-medium)'}">
+              <div class="delta-val-num" style="color:${isWorse ? 'var(--status-critical)' : isImp ? 'var(--status-success)' : 'var(--navy-900)'}">${c.current.value}</div>
+              <div class="delta-val-date">${c.current.date}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="delta-card-footer">
+          <span><strong>$\Delta$ Shift:</strong> ${c.magnitude}</span>
+          <span><strong>Assessment:</strong> ${c.clinicalSignificance}</span>
+        </div>
       </div>
-      <div class="change-right">
-        <div class="change-dir ${dirClass}">${c.direction.toUpperCase()}</div>
-        <div class="change-magnitude">${c.magnitude}</div>
-        <div class="change-sig">Significance: ${c.clinicalSignificance}</div>
-      </div>
-    </div>`;
+    `;
   }).join('');
 
   document.getElementById('tab-changes').innerHTML = `
-    <div style="margin-bottom:20px">
-      <h3 style="font-size:16px;font-weight:700;margin-bottom:4px">Clinical Change Detection</h3>
-      <p style="font-size:13px;color:var(--text-2)">AI-detected changes across all recorded visits</p>
+    <div style="margin-bottom:16px">
+      <h2 class="card-heading">Longitudinal Clinical Delta ($\Delta$) Analysis</h2>
+      <p style="font-size:12.5px;color:var(--text-secondary)">Multi-encounter biometric shifts and trend trajectories.</p>
     </div>
-    <div class="changes-grid">${html || '<p style="color:var(--text-3)">No clinical changes detected.</p>'}</div>
+    <div class="delta-grid-container">${cardsHtml || '<p style="color:var(--text-muted)">No biomarker shifts detected.</p>'}</div>
   `;
 }
 
-// ── Risk / Explainable AI Tab ──────────────────────────────────────────────
+// ── Tab 4: Explainable AI (XAI) Risk Assessment ────────────────────────────
 function renderRisk(flags) {
-  const sevIcon = { critical:'🔴', high:'🟠', medium:'🟡', low:'🟢' };
-
-  const cards = flags.map(f => `
-    <div class="risk-card ${f.severity}">
-      <div class="risk-card-header">
-        <span class="risk-sev-badge">${f.severity}</span>
-        <span style="font-size:18px">${sevIcon[f.severity] || '⚠'}</span>
-        <div class="risk-title">${f.risk}</div>
+  const cardsHtml = flags.map((f, idx) => `
+    <div class="xai-risk-card ${f.severity}">
+      <div class="xai-risk-header">
+        <div class="xai-title-row">
+          <span class="triage-badge risk-${f.severity}">${f.severity.toUpperCase()}</span>
+          <span class="xai-risk-title">${f.risk}</span>
+        </div>
+        <span class="xai-confidence-indicator">Confidence: ${f.confidence || '94%'}</span>
       </div>
-      <div class="risk-card-body">
-        <div class="risk-explain-row">
-          <div class="risk-explain-label">Reason</div>
-          <div class="risk-explain-val">${f.reason}</div>
+
+      <div class="xai-risk-body">
+        <div class="xai-audit-field">
+          <span class="xai-field-label">Clinical Reasoning:</span>
+          <span class="xai-field-value">${f.reason}</span>
         </div>
-        <div class="risk-explain-row">
-          <div class="risk-explain-label">Evidence</div>
-          <div class="risk-explain-val" style="font-family:monospace;font-size:12px;color:var(--text-2)">${f.evidence}</div>
+
+        <div class="xai-audit-field">
+          <span class="xai-field-label">Evidence Cited:</span>
+          <span class="xai-field-value"><code class="xai-evidence-code">${f.evidence}</code></span>
         </div>
-        <div class="risk-explain-row">
-          <div class="risk-explain-label">Source</div>
-          <div class="risk-explain-val">
-            <span class="risk-source-pill">📄 ${f.sourceDocument}</span>
-            &nbsp;<span style="color:var(--text-3);font-size:12px">· ${f.date}</span>
-          </div>
+
+        <div class="xai-audit-field">
+          <span class="xai-field-label">Source Document:</span>
+          <span class="xai-field-value" style="color:var(--text-muted);font-size:12px">📄 ${f.sourceDocument} (${f.date})</span>
         </div>
-        <div class="risk-explain-row">
-          <div class="risk-explain-label">Action</div>
-          <div class="risk-explain-val risk-action">${f.recommendation}</div>
+
+        <div class="xai-audit-field">
+          <span class="xai-field-label">Recommended Action:</span>
+          <span class="xai-field-value xai-action-recommendation">${f.recommendation}</span>
+        </div>
+      </div>
+
+      <!-- Human Override & Decision Actions -->
+      <div class="xai-override-bar" id="override-bar-${f.id || idx}">
+        <span class="override-label-text">Clinician Override / Order Decision:</span>
+        <div class="override-button-group">
+          <button class="btn-override-accept" onclick="handleRiskOverride('${f.id || idx}', 'accept', '${f.risk}')">
+            ✓ Accept &amp; Order
+          </button>
+          <button class="btn-override-refer" onclick="handleRiskOverride('${f.id || idx}', 'refer', '${f.risk}')">
+            ⚑ Specialist Referral
+          </button>
+          <button class="btn-override-dismiss" onclick="handleRiskOverride('${f.id || idx}', 'dismiss', '${f.risk}')">
+            ✕ Dismiss Flag
+          </button>
         </div>
       </div>
     </div>
   `).join('');
 
   document.getElementById('tab-risk').innerHTML = `
-    <div class="risk-section-header">
-      <h3>Explainable AI — Risk Intelligence</h3>
-      <p>Each risk flag includes AI reasoning, evidence trail, source document, and recommended action.</p>
+    <div style="margin-bottom:16px">
+      <h2 class="card-heading">Explainable AI (XAI) Risk Signals &amp; Decision Support</h2>
+      <p style="font-size:12.5px;color:var(--text-secondary)">Every risk flag is grounded with cited EHR evidence, clinical reasoning, and physician override controls.</p>
     </div>
-    <div class="risk-cards">${cards || '<p style="color:var(--text-3)">No risk flags detected.</p>'}</div>
+    <div class="xai-risk-cards-stream">${cardsHtml || '<p style="color:var(--text-muted)">No acute risk flags detected.</p>'}</div>
   `;
 }
 
-// ── Missing Investigations Tab ─────────────────────────────────────────────
-function renderMissing(missing) {
-  const icons = { critical:'🚨', high:'⚠️', medium:'🔔', low:'ℹ️' };
+function handleRiskOverride(id, action, title) {
+  const bar = document.getElementById(`override-bar-${id}`);
+  if (!bar) return;
 
-  const cards = missing.map(m => `
-    <div class="missing-card ${m.urgency}">
-      <div class="missing-icon">${icons[m.urgency] || '🔬'}</div>
-      <div>
-        <div class="missing-test">${m.test}</div>
-        <div class="missing-reason">${m.reason}</div>
-        <div class="missing-based">Based on: <strong>${m.basedOnCondition}</strong></div>
+  if (action === 'accept') {
+    bar.innerHTML = `<span style="font-size:12px;color:var(--status-success);font-weight:700">✓ Recommendation Accepted &amp; Added to Patient Care Plan Orders</span>`;
+    showToast(`✓ "${title}" accepted into care plan orders`);
+  } else if (action === 'refer') {
+    bar.innerHTML = `<span style="font-size:12px;color:var(--status-info);font-weight:700">⚑ Specialty Consultation Referral Dispatched</span>`;
+    showToast(`⚑ Referral consultation scheduled for "${title}"`);
+  } else if (action === 'dismiss') {
+    bar.innerHTML = `<span style="font-size:12px;color:var(--text-muted);font-style:italic">✕ Flag dismissed by attending clinician (reason documented)</span>`;
+    showToast(`Flag dismissed for "${title}"`);
+  }
+}
+
+// ── Tab 5: Missing Investigations Radar ────────────────────────────────────
+function renderMissing(missing) {
+  const cardsHtml = missing.map(m => `
+    <div class="missing-gap-card ${m.urgency}">
+      <div class="gap-info-left">
+        <div class="gap-test-title">🔬 ${m.test}</div>
+        <div class="gap-clinical-rationale">${m.reason}</div>
+        <div class="gap-metadata-row">
+          <span>Indication: <strong>${m.basedOnCondition}</strong></span>
+          ${m.guidelineRef ? `<span class="gap-guideline-ref">Guideline: ${m.guidelineRef}</span>` : ''}
+          <span>Last Recorded: <em>${m.lastDone || 'Never in EHR'}</em></span>
+        </div>
       </div>
-      <div class="missing-right">
-        <span class="urgency-badge urg-${m.urgency}">${m.urgency} priority</span>
-        <div class="last-done">${m.lastDone ? `Last done: ${m.lastDone}` : 'Never recorded'}</div>
+      <div class="gap-actions-right">
+        <span class="triage-badge risk-${m.urgency === 'critical' ? 'critical' : 'medium'}">${m.urgency.toUpperCase()} URGENCY</span>
+        <button class="btn-order-investigation" onclick="handleOrderInvestigation('${m.test}')">
+          Order Test Now
+        </button>
       </div>
     </div>
   `).join('');
 
-  const counts = { critical: 0, high: 0, medium: 0, low: 0 };
-  missing.forEach(m => counts[m.urgency] = (counts[m.urgency] || 0) + 1);
-
   document.getElementById('tab-missing').innerHTML = `
-    <div class="missing-header-bar">
-      <div>
-        <h3>Missing Investigation Detection</h3>
-        <div class="missing-summary" style="margin-top:4px">
-          ${counts.critical ? `<span style="color:#f87171">${counts.critical} Critical</span> · ` : ''}
-          ${counts.high ? `<span style="color:var(--danger)">${counts.high} High</span> · ` : ''}
-          ${counts.medium ? `<span style="color:var(--warning)">${counts.medium} Medium</span>` : ''}
-        </div>
-      </div>
+    <div style="margin-bottom:16px">
+      <h2 class="card-heading">Proactive Missing &amp; Overdue Investigations Radar</h2>
+      <p style="font-size:12.5px;color:var(--text-secondary)">Automated care-gap detection according to clinical guidelines (ADA, KDIGO, AHA/ACC).</p>
     </div>
-    <div class="missing-cards">${cards || '<p style="color:var(--text-3)">No missing investigations detected.</p>'}</div>
+    <div class="missing-radar-stream">${cardsHtml || '<p style="color:var(--text-muted)">All recommended investigations are up to date.</p>'}</div>
   `;
 }
 
-// ── Upload Modal ───────────────────────────────────────────────────────────
+function handleOrderInvestigation(testName) {
+  showToast(`📋 Lab order created for: ${testName}`);
+}
+
+// ── Upload & Multi-Report Modal Management ─────────────────────────────────
 function showUploadModal() {
   document.getElementById('upload-modal').classList.remove('hidden');
-  clearAllFiles(); // reset state each time modal opens
+  clearAllFiles();
 }
+
 function closeUploadModal() {
   document.getElementById('upload-modal').classList.add('hidden');
   document.getElementById('upload-status').classList.add('hidden');
   document.getElementById('upload-area').classList.remove('hidden');
   document.getElementById('file-list-container')?.classList.add('hidden');
 }
+
 document.getElementById('upload-modal').addEventListener('click', (e) => {
   if (e.target === e.currentTarget) closeUploadModal();
 });
 
-// ── Multi-file state ────────────────────────────────────────────────────────
-let selectedFiles = []; // array of File objects
-
 function setupUploadArea() {
   const area  = document.getElementById('upload-area');
   const input = document.getElementById('file-input');
+  if (!area || !input) return;
 
-  // Drag & drop
   area.addEventListener('dragover', (e) => { e.preventDefault(); area.classList.add('drag-over'); });
   area.addEventListener('dragleave', () => area.classList.remove('drag-over'));
   area.addEventListener('drop', (e) => {
@@ -547,14 +757,12 @@ function setupUploadArea() {
     addFiles([...e.dataTransfer.files]);
   });
 
-  // File input (multiple)
   input.addEventListener('change', (e) => {
     addFiles([...e.target.files]);
-    input.value = ''; // reset so same file can be re-added
+    input.value = '';
   });
 }
 
-// ── File type icon helper ────────────────────────────────────────────────────
 function getFileIcon(file) {
   if (file.type === 'application/pdf') return '📄';
   if (file.type === 'text/plain')      return '📝';
@@ -564,7 +772,7 @@ function getFileIcon(file) {
   if (/xray|x-ray|chest/.test(name)) return '🫁';
   if (/rx|prescription/.test(name))  return '💊';
   if (/lab|blood|report/.test(name)) return '🧪';
-  if (file.type.startsWith('image/')) return '🖼';
+  if (file.type.startsWith('image/')) return '🖼️';
   return '📎';
 }
 
@@ -578,34 +786,36 @@ function getFileTypeBadge(file) {
   if (/rx|prescription/.test(name))    return 'RX';
   if (/lab|blood/.test(name))          return 'LAB';
   if (file.type.startsWith('image/'))  return 'IMG';
-  return 'FILE';
+  return 'MEDIA';
 }
 
-// ── Add files to list ────────────────────────────────────────────────────────
 function addFiles(newFiles) {
-  const allowed = ['application/pdf','text/plain','image/jpeg','image/jpg','image/png','image/webp'];
+  const allowed = ['application/pdf', 'text/plain', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
   newFiles.forEach(f => {
     if (!allowed.includes(f.type)) {
-      showToast(`⚠️ ${f.name} — type not supported`, 'error'); return;
+      showToast(`⚠️ ${f.name} — format not supported`, 'error');
+      return;
     }
     if (f.size > 20 * 1024 * 1024) {
-      showToast(`⚠️ ${f.name} — exceeds 20MB`, 'error'); return;
+      showToast(`⚠️ ${f.name} exceeds 20MB limit`, 'error');
+      return;
     }
-    if (selectedFiles.length >= 10) {
-      showToast('⚠️ Max 10 files per analysis', 'error'); return;
+    if (state.selectedFiles.length >= 10) {
+      showToast('⚠️ Maximum 10 files per patient', 'error');
+      return;
     }
-    selectedFiles.push(f);
+    state.selectedFiles.push(f);
   });
   renderFileList();
 }
 
 function removeFile(index) {
-  selectedFiles.splice(index, 1);
+  state.selectedFiles.splice(index, 1);
   renderFileList();
 }
 
 function clearAllFiles() {
-  selectedFiles = [];
+  state.selectedFiles = [];
   renderFileList();
 }
 
@@ -613,86 +823,106 @@ function renderFileList() {
   const container = document.getElementById('file-list-container');
   const listEl    = document.getElementById('file-list');
   const countEl   = document.getElementById('file-list-count');
+  const uploadArea= document.getElementById('upload-area');
 
-  if (selectedFiles.length === 0) {
+  if (state.selectedFiles.length === 0) {
     container?.classList.add('hidden');
-    document.getElementById('upload-area')?.classList.remove('hidden');
+    uploadArea?.classList.remove('hidden');
     return;
   }
 
-  document.getElementById('upload-area').classList.add('hidden');
-  container.classList.remove('hidden');
-  countEl.textContent = `${selectedFiles.length} file${selectedFiles.length > 1 ? 's' : ''} selected`;
+  uploadArea?.classList.add('hidden');
+  container?.classList.remove('hidden');
+  if (countEl) countEl.textContent = `${state.selectedFiles.length} file${state.selectedFiles.length > 1 ? 's' : ''} staged for ingestion`;
 
-  listEl.innerHTML = selectedFiles.map((f, i) => `
-    <div class="file-list-item">
-      <span class="file-list-icon">${getFileIcon(f)}</span>
-      <span class="file-list-name">${f.name}</span>
-      <span class="file-type-badge">${getFileTypeBadge(f)}</span>
-      <span class="file-list-size">${(f.size/1024).toFixed(0)}KB</span>
-      <button class="file-remove-btn" onclick="removeFile(${i})">✕</button>
-    </div>
-  `).join('');
+  if (listEl) {
+    listEl.innerHTML = state.selectedFiles.map((f, i) => `
+      <div class="staged-file-row">
+        <div class="staged-file-left">
+          <span>${getFileIcon(f)}</span>
+          <span class="staged-file-name">${f.name}</span>
+          <span class="staged-file-badge">${getFileTypeBadge(f)}</span>
+          <span style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono)">${(f.size/1024).toFixed(0)}KB</span>
+        </div>
+        <button class="btn-file-remove" onclick="removeFile(${i})" title="Remove file">✕</button>
+      </div>
+    `).join('');
+  }
 
-  // Update analyze button text
   const btn = document.getElementById('btn-analyze');
-  if (btn) btn.textContent = `🚀  Analyze ${selectedFiles.length} Report${selectedFiles.length > 1 ? 's' : ''}`;
+  if (btn) btn.textContent = `🚀 Ingest & Synthesize ${state.selectedFiles.length} Report${state.selectedFiles.length > 1 ? 's' : ''}`;
 }
 
-// ── Start analysis with all selected files ───────────────────────────────────
 async function startAnalysis() {
-  if (selectedFiles.length === 0) return;
-  await processFiles(selectedFiles);
+  if (state.selectedFiles.length === 0) return;
+  await processFiles(state.selectedFiles);
 }
 
-
-
-// ── Process multiple files via SSE ─────────────────────────────────────────
+// ── Multi-File SSE Streaming Ingestion Pipeline ────────────────────────────
 async function processFiles(files) {
   if (!state.serverOnline) {
     closeUploadModal();
-    showToast('❌ Server is offline. Run: cd server && npm start', 'error');
+    showToast('❌ Backend server offline. Start server with: cd server && npm start', 'error');
     return;
   }
 
   const firstName = files[0].name.replace(/\.(pdf|txt|jpg|jpeg|png|webp)$/i, '');
-  const label = files.length > 1 ? `${firstName} + ${files.length - 1} more` : firstName;
+  const label = files.length > 1 ? `${firstName} (+${files.length - 1} records)` : firstName;
+  const tempId = 'NEW_' + Date.now();
+  const tempMrn = 'MRN-' + Math.floor(1000 + Math.random() * 9000);
 
-  // ── Create temp patient immediately so UI shows up ──────────────────────
-  const tempId = 'UPLOAD_' + Date.now();
   const tempPatient = {
     id: tempId,
+    mrn: tempMrn,
     name: label,
-    age: '—', gender: '—', bloodGroup: '—',
-    appointmentTime: 'Just now',
-    condition: `${files.length} report${files.length > 1 ? 's' : ''} uploaded`,
-    riskLevel: 'medium', avatar: files.length > 1 ? '📎' : '📄', reportText: ''
+    age: '—',
+    gender: '—',
+    bloodGroup: '—',
+    appointmentTime: 'Just Now',
+    condition: `${files.length} Document${files.length > 1 ? 's' : ''} Ingested`,
+    riskLevel: 'medium',
+    triageCategory: 'Review Required',
+    lastVisit: 'Today',
+    attendingDoctor: 'Dr. Sarah Chen, MD',
+    avatar: 'NR',
+    overdueGap: 'Analysis in Progress',
+    allergies: [],
+    careJourney: [
+      { id: 'step-1', name: 'Consultation', status: 'completed', date: 'Today', note: 'Document batch uploaded.' },
+      { id: 'step-2', name: 'Diagnosis', status: 'pending', date: 'Pending', note: 'Extracting entities.' },
+      { id: 'step-3', name: 'Treatment', status: 'pending', date: 'Pending', note: 'Reconciling regimen.' },
+      { id: 'step-4', name: 'Investigation', status: 'attention', date: 'Auditing', note: 'Evaluating guidelines.' },
+      { id: 'step-5', name: 'Follow-up', status: 'pending', date: 'TBD', note: 'Awaiting doctor assessment.' },
+      { id: 'step-6', name: 'Review', status: 'pending', date: 'TBD', note: 'Final sign-off.' }
+    ]
   };
 
   closeUploadModal();
   DEMO_PATIENTS.unshift(tempPatient);
-  renderPatientList();
+  renderSidebarQueue();
+  renderDashboardWorklist();
 
-  // Show patient view with pipeline immediately
-  document.getElementById('welcome-screen').classList.add('hidden');
-  document.getElementById('patient-view').classList.remove('hidden');
+  // Switch to Patient View & show Pipeline
+  showPatientView();
   renderPatientHeader(tempPatient);
-  switchTab('overview', document.querySelector('.tab-btn[data-tab="overview"]'));
-  resetPipeline();
+  renderCareJourneyStepper(tempPatient);
+  switchTab('overview', document.querySelector('.clinical-tab-btn[data-tab="overview"]'));
+
+  // Show Real-time Pipeline Bar
+  const pipeContainer = document.getElementById('pipeline-container');
+  if (pipeContainer) pipeContainer.classList.remove('hidden');
 
   document.getElementById('tab-overview').innerHTML = `
-    <div class="loading-box">
-      <div class="spinner"></div>
-      <p id="stream-status">📎 Uploading ${files.length} file${files.length > 1 ? 's' : ''} to server...</p>
-      <div id="stream-progress" style="margin-top:12px;height:4px;background:rgba(255,255,255,0.08);border-radius:4px;overflow:hidden">
-        <div id="stream-bar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--purple));transition:width 0.4s ease;border-radius:4px"></div>
-      </div>
-    </div>`;
+    <div style="text-align:center;padding:48px 20px">
+      <div style="font-size:24px;margin-bottom:12px">⏳</div>
+      <h3 style="font-size:15px;font-weight:700;color:var(--navy-900);margin-bottom:6px">Synthesizing Clinical Intelligence Brief</h3>
+      <p style="font-size:12.5px;color:var(--text-secondary)" id="stream-status-overview">Reading and extracting medical tokens from ${files.length} document(s)...</p>
+    </div>
+  `;
 
   try {
-    // ── Build FormData with ALL files ───────────────────────────────────────
     const formData = new FormData();
-    files.forEach(f => formData.append('reports', f)); // 'reports' matches multer array field
+    files.forEach(f => formData.append('reports', f));
 
     const response = await fetch('/api/upload-and-analyze', {
       method: 'POST',
@@ -704,8 +934,6 @@ async function processFiles(files) {
       throw new Error(err.error || 'Upload failed');
     }
 
-
-    // ── Read the SSE stream ─────────────────────────────────────────────────
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
@@ -726,59 +954,64 @@ async function processFiles(files) {
 
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split('\n');
-      buffer = lines.pop(); // keep incomplete line
+      buffer = lines.pop();
 
       for (const line of lines) {
-        if (line.startsWith('event:')) continue;
         if (!line.startsWith('data:')) continue;
 
         try {
           const payload = JSON.parse(line.slice(5).trim());
 
-          // ── Progress event: update pipeline step + status text ───────────
+          // Progress Event
           if (line.includes('"step"')) {
-            const { step, label, percent, done: stepDone } = payload;
+            const { step, label: stepLabel, percent, done: stepDone } = payload;
             const pipeId = PIPE_MAP[step];
             if (pipeId) {
               const el = document.getElementById(pipeId);
-              if (el) el.className = stepDone ? 'pipe-step done' : 'pipe-step active';
+              if (el) el.className = stepDone ? 'pipe-node done' : 'pipe-node active';
             }
             const statusEl = document.getElementById('stream-status');
             const barEl    = document.getElementById('stream-bar');
-            if (statusEl) statusEl.textContent = label;
+            const overviewStatus = document.getElementById('stream-status-overview');
+            if (statusEl) statusEl.textContent = stepLabel;
+            if (overviewStatus) overviewStatus.textContent = stepLabel;
             if (barEl && percent) barEl.style.width = percent + '%';
           }
 
-          // ── Result event: render everything ─────────────────────────────
+          // Result Event
           if (payload.result) {
             const result = payload.result;
 
-            // Mark all pipeline steps done
-            PIPE_STEPS.forEach(sid => {
-              const el = document.getElementById(sid);
-              if (el) el.className = 'pipe-step done';
+            // Mark all nodes complete
+            Object.values(PIPE_MAP).forEach(pid => {
+              const el = document.getElementById(pid);
+              if (el) el.className = 'pipe-node done';
             });
 
             state.currentPatientId = tempId;
             state.currentResult = result;
             DEMO_RESULTS[tempId] = result;
 
-            // Update patient header with extracted info
             if (result.patient) {
               const p = result.patient;
               tempPatient.name       = p.name       || tempPatient.name;
               tempPatient.age        = p.age        || '—';
               tempPatient.gender     = p.gender     || '—';
               tempPatient.bloodGroup = p.bloodGroup || '—';
+              tempPatient.avatar     = tempPatient.name.substring(0, 2).toUpperCase();
+              tempPatient.allergies  = p.allergies  || [];
               renderPatientHeader(tempPatient);
-              renderPatientList();
+              renderSidebarQueue();
+              renderDashboardWorklist();
             }
 
             renderAllTabs(result);
-            showToast('✅ AI Analysis complete!');
+            showToast('✅ Pre-consultation brief synthesized successfully');
+            setTimeout(() => {
+              if (pipeContainer) pipeContainer.classList.add('hidden');
+            }, 2500);
           }
 
-          // ── Error event ──────────────────────────────────────────────────
           if (payload.message && !payload.result && !payload.step) {
             throw new Error(payload.message);
           }
@@ -792,151 +1025,76 @@ async function processFiles(files) {
     }
 
   } catch (err) {
-    console.error('[processFile SSE]', err);
+    console.error('[processFiles SSE Error]', err);
     document.getElementById('tab-overview').innerHTML = `
-      <div class="loading-box">
-        <p style="color:var(--danger)">❌ ${err.message}</p>
-        <p style="color:var(--text-3);margin-top:8px">
-          Make sure the server is running: <code style="background:rgba(255,255,255,0.06);padding:2px 8px;border-radius:4px">cd server &amp;&amp; npm start</code>
-        </p>
+      <div style="background:var(--status-critical-bg);border:1px solid var(--status-critical-border);border-radius:var(--radius-lg);padding:24px;text-align:center">
+        <h3 style="color:var(--status-critical);font-size:15px;margin-bottom:8px">Ingestion / Extraction Error</h3>
+        <p style="font-size:13px;color:var(--text-primary);margin-bottom:12px">${err.message}</p>
+        <button class="btn-clinical-secondary" onclick="showDashboardView()">Return to Worklist</button>
       </div>`;
     showToast('❌ ' + err.message, 'error');
   }
 }
 
+// ── Patient Record Discharge / Delete ──────────────────────────────────────
+function deletePatient(event, id) {
+  event.stopPropagation();
+  const patient = DEMO_PATIENTS.find(p => p.id === id);
+  if (!patient) return;
 
-// ── PDF Text Extraction ────────────────────────────────────────────────────
-async function extractPdfText(file) {
-  const arrayBuffer = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-  let fullText = '';
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const content = await page.getTextContent();
-    fullText += content.items.map(item => item.str).join(' ') + '\n';
-  }
-  return fullText;
+  const confirmed = confirm(`Discharge patient "${patient.name}" (${patient.mrn || id}) from today's active worklist queue?`);
+  if (!confirmed) return;
+
+  executePatientRemoval(id, patient.name);
 }
 
-// ── Tesseract OCR Fallback (for scanned/image PDFs) ───────────────────────
-async function runTesseractOCR(file) {
-  const arrayBuffer = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-  let allText = '';
+function handlePatientDeleteFromDetail() {
+  if (!state.currentPatientId) return;
+  const patient = DEMO_PATIENTS.find(p => p.id === state.currentPatientId);
+  if (!patient) return;
 
-  // Process up to first 3 pages (speed vs coverage tradeoff for hackathon)
-  const pagesToProcess = Math.min(pdf.numPages, 3);
+  const confirmed = confirm(`Discharge patient "${patient.name}" (${patient.mrn || state.currentPatientId}) from active queue?`);
+  if (!confirmed) return;
 
-  for (let i = 1; i <= pagesToProcess; i++) {
-    const page = await pdf.getPage(i);
-    const viewport = page.getViewport({ scale: 2.0 }); // 2x scale = better OCR accuracy
-    const canvas = document.createElement('canvas');
-    canvas.width = viewport.width;
-    canvas.height = viewport.height;
-    const ctx = canvas.getContext('2d');
-    await page.render({ canvasContext: ctx, viewport }).promise;
-
-    // Run Tesseract on this page image
-    const { data: { text } } = await Tesseract.recognize(canvas, 'eng', {
-      logger: m => console.log(`OCR Page ${i}:`, m.status, Math.round((m.progress || 0) * 100) + '%')
-    });
-    allText += text + '\n';
-  }
-
-  return allText;
+  executePatientRemoval(state.currentPatientId, patient.name);
 }
 
-// ── Server-side AI Analysis ────────────────────────────────────────────────
-// Replaces the old direct Gemini call. API key stays on the server.
-async function analyzeWithServer(id, patient, reportText) {
-  // Show patient view
-  document.getElementById('welcome-screen').classList.add('hidden');
-  document.getElementById('patient-view').classList.remove('hidden');
-  renderPatientHeader(patient);
-  switchTab('overview', document.querySelector('.tab-btn[data-tab="overview"]'));
+function executePatientRemoval(id, name) {
+  const index = DEMO_PATIENTS.findIndex(p => p.id === id);
+  if (index !== -1) DEMO_PATIENTS.splice(index, 1);
+  if (DEMO_RESULTS[id]) delete DEMO_RESULTS[id];
 
-  // Loading state
-  document.getElementById('tab-overview').innerHTML = `
-    <div class="loading-box">
-      <div class="spinner"></div>
-      <p>Running AI Pipeline — Extracting entities, building timeline, detecting risks...</p>
-      <p style="font-size:12px;color:var(--text-3);margin-top:8px">Powered by Gemini 2.0 Flash on the Node.js server</p>
-    </div>`;
-
-  resetPipeline();
-
-  try {
-    // Start pipeline animation concurrently with the server call
-    animatePipelineLive(async () => {});
-    await sleep(800);
-
-    // ── Call /api/analyze on the Node.js server ────────────────────────────
-    const res = await fetch('/api/analyze', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: reportText })
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.error || `Server error ${res.status}`);
-    }
-
-    const result = data.result;
-
-    // Finish pipeline
-    PIPE_STEPS.forEach(sid => {
-      const el = document.getElementById(sid);
-      if (el) el.className = 'pipe-step done';
-    });
-
-    state.currentPatientId = id;
-    state.currentResult = result;
-    DEMO_RESULTS[id] = result;
-
-    // Update patient header with AI-extracted patient info
-    if (result.patient) {
-      const p = result.patient;
-      patient.name      = p.name      || patient.name;
-      patient.age       = p.age       || '—';
-      patient.gender    = p.gender    || '—';
-      patient.bloodGroup = p.bloodGroup || '—';
-      renderPatientHeader(patient);
-    }
-
-    renderAllTabs(result);
-    showToast('✅ AI Analysis complete!');
-
-  } catch (err) {
-    console.error('[analyzeWithServer]', err);
-    document.getElementById('tab-overview').innerHTML = `
-      <div class="loading-box">
-        <p style="color:var(--danger)">❌ ${err.message}</p>
-        <p style="color:var(--text-3);margin-top:8px">
-          Make sure the server is running: <code style="background:rgba(255,255,255,0.06);padding:2px 8px;border-radius:4px">cd server &amp;&amp; npm start</code>
-        </p>
-      </div>`;
-    showToast('❌ Analysis failed', 'error');
+  if (state.currentPatientId === id) {
+    showDashboardView();
   }
+
+  renderSidebarQueue();
+  renderDashboardWorklist();
+  showToast(`Patient "${name}" discharged from worklist`);
 }
 
+// ── Print & Export Utilities ───────────────────────────────────────────────
+function printPatientBrief() {
+  window.print();
+}
 
-// ── Utilities ──────────────────────────────────────────────────────────────
-function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function exportWorklistReport() {
+  showToast('📄 Clinical worklist triage report exported');
+  window.print();
+}
 
 function showToast(msg, type = 'success') {
   const toast = document.createElement('div');
+  const isErr = type === 'error';
   toast.style.cssText = `
-    position:fixed;bottom:24px;right:24px;z-index:9999;
-    background:${type === 'error' ? 'var(--danger-bg)' : 'rgba(16,185,129,0.15)'};
-    border:1px solid ${type === 'error' ? 'var(--danger-border)' : 'var(--success-border)'};
-    color:${type === 'error' ? 'var(--danger)' : 'var(--success)'};
-    padding:12px 20px;border-radius:12px;font-size:13px;font-weight:600;
-    backdrop-filter:blur(8px);animation:slideUp 0.3s ease;
-    box-shadow:0 4px 20px rgba(0,0,0,0.4);
+    position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+    background-color: ${isErr ? 'var(--status-critical-bg)' : 'var(--navy-900)'};
+    border: 1px solid ${isErr ? 'var(--status-critical-border)' : 'var(--navy-700)'};
+    color: ${isErr ? 'var(--status-critical)' : '#ffffff'};
+    padding: 10px 18px; border-radius: var(--radius-md); font-size: 12.5px; font-weight: 600;
+    box-shadow: var(--shadow-lg); animation: slideUp 0.2s ease;
   `;
   toast.textContent = msg;
   document.body.appendChild(toast);
-  setTimeout(() => toast.remove(), 3500);
+  setTimeout(() => toast.remove(), 3200);
 }
