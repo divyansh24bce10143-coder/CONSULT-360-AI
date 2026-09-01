@@ -34,6 +34,10 @@
     </div>
 
     <div class="topbar-right">
+      <button class="btn-clinical-ghost" onclick="openHotkeysModal()" title="Keyboard shortcuts (Hotkey: ?)">
+        <span>⌨️</span> Shortcuts
+      </button>
+
       <div class="system-health-badge" id="api-status">
         <span class="status-dot" id="status-dot"></span>
         <span id="status-text">Checking Clinical Engine...</span>
@@ -224,6 +228,13 @@
           </div>
 
           <div class="patient-identity-right">
+            <!-- Fast Patient Queue Switcher -->
+            <div class="patient-queue-nav" title="Navigate through today's patient queue">
+              <button class="btn-queue-prev" onclick="navigatePatientQueue(-1)" title="Previous patient (Hotkey: [ )">◀</button>
+              <span class="queue-nav-text" id="queue-position-indicator">1 of 3</span>
+              <button class="btn-queue-next" onclick="navigatePatientQueue(1)" title="Next patient (Hotkey: ] )">▶</button>
+            </div>
+
             <button class="btn-clinical-secondary" id="btn-view-chart-records" onclick="openChartRecordsModal()" title="View active encounter chart orders and signed directives">
               <span>📋</span> Chart Records <span class="tab-counter-badge" id="chart-records-counter" style="background-color:var(--clinical-blue)">0</span>
             </button>
@@ -237,8 +248,8 @@
               <span>✕</span> Discharge
             </button>
           </div>
-
         </div>
+
 
         <!-- Prominent Allergy & Critical Precautions Alert Banner -->
         <div class="clinical-allergy-banner" id="hdr-allergy-banner">
@@ -438,9 +449,73 @@
     </div>
   </div>
 
+  <!-- ════════════════════════════════════════════════════════════════════════
+       CLINICAL KEYBOARD SHORTCUTS MODAL
+       ════════════════════════════════════════════════════════════════════════ -->
+  <div id="hotkeys-modal" class="modal-overlay hidden">
+    <div class="clinical-modal-dialog" style="max-width: 520px;">
+      <div class="modal-header-bar">
+        <div class="modal-title-group">
+          <h3 class="modal-heading">⌨️ Clinical Keyboard Shortcuts</h3>
+          <p class="modal-subheading">Power workflows for rapid chart review &amp; encounter orders.</p>
+        </div>
+        <button class="modal-close-btn" onclick="closeHotkeysModal()">✕</button>
+      </div>
+
+      <div style="padding:16px 24px;display:flex;flex-direction:column;gap:10px">
+        <div class="shortcut-row">
+          <span class="shortcut-desc">Switch to Clinical Overview &amp; AI Brief</span>
+          <kbd class="shortcut-key">1</kbd>
+        </div>
+        <div class="shortcut-row">
+          <span class="shortcut-desc">Switch to Care Journey &amp; Timeline</span>
+          <kbd class="shortcut-key">2</kbd>
+        </div>
+        <div class="shortcut-row">
+          <span class="shortcut-desc">Switch to Metric Trends &amp; Delta (Δ)</span>
+          <kbd class="shortcut-key">3</kbd>
+        </div>
+        <div class="shortcut-row">
+          <span class="shortcut-desc">Switch to Explainable AI Risk Signals</span>
+          <kbd class="shortcut-key">4</kbd>
+        </div>
+        <div class="shortcut-row">
+          <span class="shortcut-desc">Switch to Missing Investigations Radar</span>
+          <kbd class="shortcut-key">5</kbd>
+        </div>
+        <div class="shortcut-row">
+          <span class="shortcut-desc">Next Patient in Queue</span>
+          <kbd class="shortcut-key">]</kbd>
+        </div>
+        <div class="shortcut-row">
+          <span class="shortcut-desc">Previous Patient in Queue</span>
+          <kbd class="shortcut-key">[</kbd>
+        </div>
+        <div class="shortcut-row">
+          <span class="shortcut-desc">Open Chart Records / Orders Log</span>
+          <kbd class="shortcut-key">c</kbd>
+        </div>
+        <div class="shortcut-row">
+          <span class="shortcut-desc">Return to Outpatient Triage Worklist</span>
+          <kbd class="shortcut-key">Esc</kbd>
+        </div>
+        <div class="shortcut-row">
+          <span class="shortcut-desc">Focus Search Queue</span>
+          <kbd class="shortcut-key">/</kbd>
+        </div>
+      </div>
+
+      <div class="modal-actions-footer">
+        <button class="btn-clinical-primary" onclick="closeHotkeysModal()" style="width:100%">
+          Got it
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Scripts -->
-  <script src="demo-data.js?v=5"></script>
-  <script src="app.js?v=5"></script>
+  <script src="demo-data.js?v=6"></script>
+  <script src="app.js?v=6"></script>
 </body>
 </html>
 

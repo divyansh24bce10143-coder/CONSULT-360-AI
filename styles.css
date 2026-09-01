@@ -2215,3 +2215,144 @@ body.clinical-theme {
   from { transform: translateY(8px); opacity: 0; }
   to   { transform: translateY(0); opacity: 1; }
 }
+
+/* ── User-Friendly Quick Nav & UI Enhancements ───────────────────────────── */
+.patient-queue-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  padding: 3px 6px;
+  box-shadow: var(--shadow-xs);
+}
+
+.btn-queue-prev,
+.btn-queue-next {
+  background: transparent;
+  border: none;
+  color: var(--navy-800);
+  font-size: 11px;
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-weight: 700;
+}
+
+.btn-queue-prev:hover,
+.btn-queue-next:hover {
+  background-color: var(--bg-subtle);
+  color: var(--clinical-blue);
+}
+
+.queue-nav-text {
+  font-size: 11.5px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--text-secondary);
+  padding: 0 4px;
+}
+
+.btn-clinical-ghost {
+  background: transparent;
+  border: 1px solid var(--border-medium);
+  color: var(--text-secondary);
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.btn-clinical-ghost:hover {
+  background-color: var(--bg-subtle);
+  color: var(--navy-900);
+  border-color: var(--border-strong);
+}
+
+/* ── Keyboard Shortcuts Modal Styling ────────────────────────────────────── */
+.shortcut-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+}
+
+.shortcut-desc {
+  font-size: 12.5px;
+  color: var(--navy-900);
+  font-weight: 500;
+}
+
+.shortcut-key {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--navy-900);
+  background-color: #ffffff;
+  border: 1px solid var(--border-medium);
+  border-bottom: 2px solid var(--border-strong);
+  border-radius: 4px;
+  padding: 2px 8px;
+  box-shadow: var(--shadow-xs);
+}
+
+/* ── Interactive Care Journey Steps ──────────────────────────────────────── */
+.journey-step-box {
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.journey-step-box:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+  border-color: var(--clinical-blue);
+}
+
+.journey-step-box:active {
+  transform: translateY(0);
+}
+
+/* ── Quick Action Buttons inside Directives & Overview ──────────────────── */
+.btn-approve-all {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #065f46;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-approve-all:hover {
+  background: #dcfce7;
+  border-color: #86efac;
+}
+
+.btn-copy-brief {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-copy-brief:hover {
+  background: #dbeafe;
+}
+

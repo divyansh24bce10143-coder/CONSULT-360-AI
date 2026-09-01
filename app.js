@@ -296,6 +296,9 @@ async function selectPatient(id) {
 
   // Update chart counter badge
   updateChartCounterBadge();
+
+  // Update queue position indicator
+  updateQueueNavIndicator();
 }
 
 function renderPatientHeader(patient) {
@@ -357,7 +360,7 @@ function renderCareJourneyStepper(patient) {
   };
 
   stepper.innerHTML = journey.map((step, idx) => `
-    <div class="journey-step-box step-${step.status}">
+    <div class="journey-step-box step-${step.status}" onclick="jumpToJourneyStage('${step.name}')" title="Click to inspect ${step.name} stage">
       <div class="step-num-status">
         <span class="step-name-text">${idx + 1}. ${step.name}</span>
         <span class="step-icon-indicator" title="${statusLabels[step.status]}">${statusIcons[step.status]}</span>
@@ -369,7 +372,26 @@ function renderCareJourneyStepper(patient) {
 
   if (summaryEl) {
     const activeStep = journey.find(s => s.status === 'attention' || s.status === 'missed') || journey.find(s => s.status === 'pending') || journey[journey.length - 1];
-    summaryEl.textContent = `Current Active Stage: ${activeStep.name} (${statusLabels[activeStep.status]})`;
+    summaryEl.textContent = `Current Active Stage: ${activeStep.name} (${statusLabels[activeStep.status]}) · Click any step to jump to details`;
+  }
+}
+
+function jumpToJourneyStage(stageName) {
+  const name = (stageName || '').toLowerCase();
+  if (name.includes('consult') || name.includes('overview')) {
+    switchTab('overview', document.querySelector('.clinical-tab-btn[data-tab="overview"]'));
+  } else if (name.includes('diagnos')) {
+    switchTab('overview', document.querySelector('.clinical-tab-btn[data-tab="overview"]'));
+    showToast('Navigated to Active Diagnoses');
+  } else if (name.includes('treat')) {
+    switchTab('overview', document.querySelector('.clinical-tab-btn[data-tab="overview"]'));
+    showToast('Navigated to Reconciled Medications');
+  } else if (name.includes('investig')) {
+    switchTab('missing', document.querySelector('.clinical-tab-btn[data-tab="missing"]'));
+  } else if (name.includes('follow')) {
+    switchTab('timeline', document.querySelector('.clinical-tab-btn[data-tab="timeline"]'));
+  } else if (name.includes('review')) {
+    switchTab('risk', document.querySelector('.clinical-tab-btn[data-tab="risk"]'));
   }
 }
 
@@ -461,9 +483,14 @@ function renderOverview(r) {
       <!-- AI Care Brief Card -->
       <div class="ai-care-summary-box">
         <div class="ai-summary-header-row">
-          <span class="ai-summary-tag">
-            <span>✨</span> PRE-CONSULTATION CLINICAL AI SYNTHESIS
-          </span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="ai-summary-tag">
+              <span>✨</span> PRE-CONSULTATION CLINICAL AI SYNTHESIS
+            </span>
+            <button class="btn-copy-brief" onclick="copyAiBriefText()" title="Copy pre-consultation summary to clipboard">
+              <span>📋</span> Copy Brief
+            </button>
+          </div>
           <span class="ai-confidence-pill">
             Grounded Confidence: ${ai.confidenceScore || 94}% · ${ai.modelUsed || 'Gemini 3.6 Flash'}
           </span>
@@ -515,10 +542,16 @@ function renderOverview(r) {
         </div>
 
         <div class="clinical-card" style="padding:16px">
-          <h3 class="card-heading" style="margin-bottom:12px">✅ Physician Next-Action Directives</h3>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <h3 class="card-heading" style="margin-bottom:0">✅ Physician Next-Action Directives</h3>
+            <button class="btn-approve-all" onclick="approveAllDirectives()" title="Approve all recommended actions into chart orders">
+              ✓ Approve All
+            </button>
+          </div>
           <div>${actionsHtml || '<p style="color:var(--text-muted)">No action directives generated.</p>'}</div>
         </div>
       </div>
+
 
       <!-- Live Active Encounter Chart Records & Order Sheet -->
       <div class="clinical-card" style="padding:18px;border-left:4px solid var(--clinical-blue)">
@@ -1365,6 +1398,111 @@ function exportWorklistReport() {
   window.print();
 }
 
+// ── Queue Navigation Controls ──────────────────────────────────────────────
+function navigatePatientQueue(delta) {
+  if (DEMO_PATIENTS.length === 0) return;
+  let currIdx = DEMO_PATIENTS.findIndex(p => p.id === state.currentPatientId);
+  if (currIdx === -1) currIdx = 0;
+
+  let nextIdx = currIdx + delta;
+  if (nextIdx < 0) nextIdx = DEMO_PATIENTS.length - 1;
+  if (nextIdx >= DEMO_PATIENTS.length) nextIdx = 0;
+
+  selectPatient(DEMO_PATIENTS[nextIdx].id);
+}
+
+function updateQueueNavIndicator() {
+  const el = document.getElementById('queue-position-indicator');
+  if (!el) return;
+  let currIdx = DEMO_PATIENTS.findIndex(p => p.id === state.currentPatientId);
+  if (currIdx === -1) currIdx = 0;
+  el.textContent = `${currIdx + 1} of ${DEMO_PATIENTS.length}`;
+}
+
+// ── Fast Clinical Action Helpers ───────────────────────────────────────────
+function copyAiBriefText() {
+  const patientId = state.currentPatientId;
+  const result = state.currentResult || DEMO_RESULTS[patientId];
+  if (!result) return;
+  const s = result.summary || {};
+  const txt = `CONSULT 360 AI CLINICAL BRIEF\n${s.oneLiner || ''}\n\nClinical Summary:\n${s.clinicalSummary || s.chiefComplaint || ''}`;
+  navigator.clipboard.writeText(txt).then(() => {
+    showToast('📋 Clinical AI Brief copied to clipboard');
+  });
+}
+
+function approveAllDirectives() {
+  const patientId = state.currentPatientId;
+  const result = state.currentResult || DEMO_RESULTS[patientId];
+  if (!result?.summary?.actionItems || !patientId) return;
+
+  const chart = getPatientChart(patientId);
+  const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  result.summary.actionItems.forEach((action, idx) => {
+    const chk = document.getElementById(`dir-${idx}`);
+    if (chk) chk.checked = true;
+    if (!chart.directives.some(d => d.text === action)) {
+      chart.directives.push({
+        text: action,
+        time: timeStr,
+        clinician: 'Dr. Sarah Chen, MD'
+      });
+    }
+  });
+
+  updateChartCounterBadge();
+  showToast('✓ All physician directives approved and logged into chart record');
+}
+
+// ── Keyboard Shortcuts Modal Controls ──────────────────────────────────────
+function openHotkeysModal() {
+  document.getElementById('hotkeys-modal')?.classList.remove('hidden');
+}
+
+function closeHotkeysModal() {
+  document.getElementById('hotkeys-modal')?.classList.add('hidden');
+}
+
+// ── Global Keyboard Shortcuts Listener ─────────────────────────────────────
+window.addEventListener('keydown', (e) => {
+  // Do not intercept if user is typing inside text inputs
+  if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) {
+    if (e.key === 'Escape') document.activeElement.blur();
+    return;
+  }
+
+  if (e.key === '1') {
+    switchTab('overview', document.querySelector('.clinical-tab-btn[data-tab="overview"]'));
+  } else if (e.key === '2') {
+    switchTab('timeline', document.querySelector('.clinical-tab-btn[data-tab="timeline"]'));
+  } else if (e.key === '3') {
+    switchTab('changes', document.querySelector('.clinical-tab-btn[data-tab="changes"]'));
+  } else if (e.key === '4') {
+    switchTab('risk', document.querySelector('.clinical-tab-btn[data-tab="risk"]'));
+  } else if (e.key === '5') {
+    switchTab('missing', document.querySelector('.clinical-tab-btn[data-tab="missing"]'));
+  } else if (e.key === '[') {
+    navigatePatientQueue(-1);
+  } else if (e.key === ']') {
+    navigatePatientQueue(1);
+  } else if (e.key === 'c' || e.key === 'C') {
+    openChartRecordsModal();
+  } else if (e.key === 'Escape') {
+    const modals = document.querySelectorAll('.modal-overlay:not(.hidden)');
+    if (modals.length > 0) {
+      modals.forEach(m => m.classList.add('hidden'));
+    } else {
+      showDashboardView();
+    }
+  } else if (e.key === '?' || (e.shiftKey && e.key === '/')) {
+    openHotkeysModal();
+  } else if (e.key === '/') {
+    e.preventDefault();
+    document.getElementById('sidebar-search-input')?.focus();
+  }
+});
+
 function showToast(msg, type = 'success') {
   const toast = document.createElement('div');
   const isErr = type === 'error';
@@ -1380,3 +1518,5 @@ function showToast(msg, type = 'success') {
   document.body.appendChild(toast);
   setTimeout(() => toast.remove(), 3200);
 }
+
+
