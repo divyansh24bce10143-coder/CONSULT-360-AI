@@ -1,153 +1,160 @@
-/* =============================================
-   CONSULT360 AI — GEMINI VISION OCR SERVICE
-   Reads medical images using Gemini Vision:
-   - ECG / EKG strips
-   - Echo / Echocardiogram reports
-   - X-Ray images
-   - Handwritten prescriptions & notes
-   - Lab report photos
-   - Any medical document image
-   ============================================= */
+/* ==========================================================================
+   CONSULT 360 AI — GEMINI VISION OCR & MULTIMODAL INGESTION SERVICE
+   Reads medical images and visual PDFs using Gemini Vision:
+   - ECG / EKG waveforms and lead intervals
+   - 2D Echocardiograms (EF%, chamber dimensions, valves)
+   - Chest Radiographs / X-Rays
+   - Handwritten clinical prescriptions & OPD notes
+   - Laboratory report photos
+   - Scanned medical PDFs
+   ========================================================================== */
 
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-// ── Detect type of medical image from filename ────────────────────────────
+// ── Detect type of medical document from filename ─────────────────────────
 function detectImageType(filename) {
-  const name = filename.toLowerCase();
-  if (/ecg|ekg|electrocardiogram|cardiac.strip/.test(name))      return 'ecg';
-  if (/echo|echocardiogram|2d.echo|doppler/.test(name))          return 'echo';
-  if (/xray|x-ray|x_ray|chest|radiograph|cxr/.test(name))       return 'xray';
-  if (/rx|prescription|precription|medic|drug/.test(name))       return 'prescription';
-  if (/mri|ct.scan|ct-scan|scan/.test(name))                     return 'scan';
-  if (/lab|report|result|blood|urine|pathol/.test(name))         return 'lab';
-  if (/handwrit|note|opd|ipd|history|clinical/.test(name))       return 'handwritten';
+  const name = (filename || '').toLowerCase();
+  if (/ecg|ekg|electrocardiogram|cardiac.strip|rhythm/.test(name)) return 'ecg';
+  if (/echo|echocardiogram|2d.echo|doppler|lvef/.test(name))      return 'echo';
+  if (/xray|x-ray|x_ray|chest|radiograph|cxr/.test(name))        return 'xray';
+  if (/rx|prescription|precription|medic|drug|dose/.test(name))   return 'prescription';
+  if (/mri|ct.scan|ct-scan|scan|brain|head/.test(name))          return 'scan';
+  if (/lab|report|result|blood|urine|pathol|cbc|lipid/.test(name)) return 'lab';
+  if (/handwrit|note|opd|ipd|history|clinical|chart/.test(name)) return 'handwritten';
   return 'general';
 }
 
-// ── Build specialised prompt per image type ───────────────────────────────
+// ── Specialised clinical extraction prompt per modality ───────────────────
 function buildVisionPrompt(imageType) {
   switch (imageType) {
-
     case 'ecg':
-      return `This is an ECG/EKG strip. You are a cardiologist. Carefully analyze and extract:
+      return `You are a clinical cardiologist analyzing this ECG/EKG tracing. Extract and transcribe all diagnostic metrics:
 - Heart Rate (bpm)
-- Rhythm: (Sinus Rhythm / Atrial Fibrillation / SVT / VT / Brady / other)
-- PR Interval (ms) — normal 120-200ms
-- QRS Duration (ms) — normal <120ms
+- Cardiac Rhythm (Normal Sinus / Atrial Fibrillation / SVT / VT / Junctional / Bradycardia)
+- PR Interval (ms) [Normal: 120–200ms]
+- QRS Duration (ms) [Normal: <120ms]
 - QT / QTc Interval (ms)
-- ST Segment: Normal / Elevated (specify leads) / Depressed (specify leads)
-- T-Wave: Normal / Inverted (specify leads) / Peaked
-- P-Wave: Present / Absent / Abnormal
-- Axis: Normal / Left axis deviation / Right axis deviation
-- Any bundle branch block (LBBB/RBBB)
-- Any significant abnormalities or clinical findings
-Format as clear structured medical text. State "Not clearly visible" for anything unclear.`;
+- ST Segment: (Isoelectric / ST Elevation [specify leads] / ST Depression [specify leads])
+- T-Wave Morphology: (Normal / Inverted / Peaked / Biphasic)
+- P-Wave Morphology & PR segment
+- Cardiac Axis (Normal / Left Axis Deviation / Right Axis Deviation)
+- Conduction Blocks (LBBB / RBBB / Fascicular block / AV block)
+- Diagnostic Clinical Summary / Interpretation
+Format as structured clinical text. If any metric is obscured, note "Not clearly visualized".`;
 
     case 'echo':
-      return `This is an echocardiogram report or image. Extract all findings including:
-- Ejection Fraction (EF%) and classification (Normal ≥55% / Mildly reduced 45-54% / Moderately reduced 30-44% / Severely reduced <30%)
-- Left Ventricular (LV): size, wall thickness, function, diastolic function grade
-- Right Ventricular (RV): size and function
-- Atria: Left atrium size, Right atrium
-- Mitral Valve: normal / stenosis / regurgitation (mild/moderate/severe)
-- Aortic Valve: normal / stenosis / regurgitation
-- Tricuspid Valve: findings
-- Pericardium: any effusion (trace/small/moderate/large)
-- Wall Motion: any hypokinesia / akinesia / dyskinesia (specify segments)
-- LVOT / RVOT findings
-- Impression / Conclusion if mentioned
-Format as structured medical text.`;
+      return `You are a cardiologist analyzing this Echocardiogram report/image. Extract and transcribe all findings:
+- Left Ventricular Ejection Fraction (LVEF %) and classification
+- LV Dimensions & Wall Thickness (LVIDd, LVIDs, IVSd, LVPWd)
+- Regional Wall Motion Abnormalities (RWMA): specify segments (hypokinesia, akinesia, dyskinesia)
+- Valvular Assessment:
+  * Mitral Valve (stenosis/regurgitation grade)
+  * Aortic Valve (stenosis/regurgitation grade, peak gradient)
+  * Tricuspid & Pulmonary Valves
+- Diastolic Function Grade (E/A ratio, E/e')
+- Atrial & Right Ventricular Dimensions (LA size, RV systolic function)
+- Pericardial Effusion (None / Trace / Small / Moderate / Large)
+- Final Clinical Conclusion / Impression
+Format as structured clinical medical text.`;
 
     case 'xray':
-      return `This is a medical X-ray or radiology image/report. Extract:
-- Type of X-ray (Chest PA/AP, Abdomen, etc.)
-- Lung fields: any consolidation, effusion, pneumothorax, cardiomegaly
-- Heart size and borders
-- Mediastinum
-- Bones: any fractures, lesions
-- Any other findings
-- Impression / Radiologist conclusion
-Transcribe any printed text visible. Format as structured medical text.`;
+      return `You are a radiologist analyzing this chest radiograph / X-Ray image. Extract all findings:
+- Examination View: (PA / AP / Lateral)
+- Bony Thorax & Soft Tissues
+- Cardiac Silhouette & Mediastinum (Cardiothoracic ratio, cardiomegaly presence)
+- Lung Fields & Parenchyma (Consolidations, infiltrates, nodules, reticular opacities)
+- Pleural Spaces (Effusion, blunting of costophrenic angles, pneumothorax)
+- Diaphragm & Subdiaphragmatic space
+- Lines, Tubes, or Devices (if present)
+- Impression / Radiological Diagnosis
+Format as structured clinical medical text.`;
 
     case 'prescription':
-      return `This is a medical prescription. Extract ALL medications listed:
-For each medication provide:
-- Drug name (generic name and brand name if visible)
-- Dose (e.g. 500mg, 40mg)
-- Route (oral / IV / topical etc.)
-- Frequency (OD=once daily / BD=twice / TDS=thrice / QID=four times / SOS=as needed)
-- Duration (e.g. 5 days, 1 month, continue)
-- Any special instructions (with food, empty stomach, at bedtime)
-Also extract: doctor name, date, patient name if visible.
-Format as structured medical text.`;
-
-    case 'scan':
-      return `This is a medical scan report (MRI/CT). Extract all findings, measurements, and the radiologist's impression. Transcribe all visible text accurately. Format as structured medical text.`;
+      return `You are an expert clinical pharmacist and physician transcribing this medical prescription / handwritten doctor note:
+- Date of Prescription
+- Prescribing Doctor / Department
+- Patient Identifiers (Name, Age, Gender, MRN if visible)
+- Each Prescribed Medication:
+  * Drug Name (Generic / Brand)
+  * Strength / Dose (e.g. 500mg, 5mg)
+  * Route of Administration (Oral, IV, Inhalation)
+  * Frequency & Timing (e.g. OD, BD, TDS, PRN, before/after food)
+  * Duration of therapy
+- Diagnostic Notes / Clinical Impression mentioned
+- Special Physician Instructions / Dietary or lifestyle precautions
+Transcribe every item meticulously. Highlight any illegible handwriting as [Unclear: best guess].`;
 
     case 'lab':
-      return `This is a laboratory report or blood/urine test result. Extract:
-- Test name
-- Patient result value
-- Unit (mg/dL, g/dL, %, etc.)
-- Reference range (normal range)
-- Flag (High H / Low L / Critical C) if marked
-- Date of test
-For each test result found. Also note the lab name and date. Format as structured medical text.`;
-
-    case 'handwritten':
-      return `This is a handwritten medical document (clinical notes, OPD notes, IPD sheet, or doctor's notes). 
-Carefully transcribe ALL handwritten text including:
-- Patient complaints / symptoms
-- Clinical examination findings  
-- Diagnosis / impression
-- Treatment plan
-- Medications prescribed
-- Follow-up instructions
-- Any vitals or measurements noted
-Read carefully — medical handwriting may use abbreviations like:
-SOB=Shortness of breath, c/o=complains of, h/o=history of, k/c/o=known case of,
-BP=blood pressure, P=pulse, T=temperature, RR=respiratory rate.
-Expand abbreviations where possible. Format as structured medical text.`;
+      return `You are a laboratory pathologist extracting quantitative results from this lab report:
+- Patient Name, Age, MRN, Sample Date
+- Test Names & Categories (Biochemistry, Hematology, Urinalysis, Immunology)
+- Extracted Numerical Values & Units (e.g. 145 mg/dL, 9.3 %)
+- Reference Normal Ranges provided
+- Flag any abnormal / critical values clearly with [ABNORMAL] or [CRITICAL]
+Format as structured clinical tabular text.`;
 
     default:
-      return `This is a medical document, report, or image. Extract ALL medical information visible including:
-- Patient information (name, age, gender if visible)
-- Diagnoses, conditions, clinical findings
-- Medications, doses, frequency
-- Test results, values, reference ranges
-- Vital signs
-- Doctor's notes, observations, instructions
-- Dates of visit / examination
-Transcribe ALL handwritten and printed text accurately.
-Format as clear structured medical text.`;
+      return `You are a clinical physician transcribing this patient medical document:
+- Document Type & Encounter Date
+- Chief Complaints & History of Present Illness
+- Vital Signs (BP, HR, RR, Temp, SpO2, Weight)
+- Diagnoses / Assessment
+- Medication Regimen & Dosages
+- Laboratory / Diagnostic Findings
+- Clinical Plan & Follow-up Directives
+Format as clean structured clinical text.`;
   }
 }
 
-// ── Main: extract medical info from image using Gemini Vision ─────────────
+// ── Resilient execution with retry for transient network drops ─────────────
+async function generateContentWithRetry(model, payload, retries = 3) {
+  let lastError;
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      return await model.generateContent(payload);
+    } catch (err) {
+      lastError = err;
+      console.warn(`[Vision OCR] Attempt ${attempt}/${retries} failed: ${err.message}`);
+      if (attempt < retries) {
+        const delay = attempt * 1200; // Exponential backoff: 1.2s, 2.4s
+        await new Promise(r => setTimeout(r, delay));
+      }
+    }
+  }
+  throw lastError;
+}
+
+// ── Main: Extract clinical text from image / visual PDF buffer ─────────────
 async function extractTextFromImage(buffer, filename, mimeType) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey || apiKey === 'your_gemini_api_key_here') {
-    throw new Error('GEMINI_API_KEY not set in server/.env');
+    throw new Error('GEMINI_API_KEY not configured in server/.env');
   }
 
-  const genAI  = new GoogleGenerativeAI(apiKey);
-  const model  = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({
+    model: 'gemini-3.6-flash',
+    generationConfig: {
+      temperature: 0.1,
+      maxOutputTokens: 8192
+    }
+  });
+
   const imageType = detectImageType(filename);
-  const prompt    = buildVisionPrompt(imageType);
+  const prompt = buildVisionPrompt(imageType);
 
-  console.log(`[Vision] Processing "${filename}" as type: ${imageType.toUpperCase()} | MIME: ${mimeType}`);
+  console.log(`[Vision OCR] Ingesting "${filename}" as ${imageType.toUpperCase()} | MIME: ${mimeType}`);
 
-  const base64Image = buffer.toString('base64');
+  const base64Data = buffer.toString('base64');
 
-  // ── Correct format for Gemini multimodal (vision) API ────────────────────
-  const result = await model.generateContent({
+  const result = await generateContentWithRetry(model, {
     contents: [{
       role: 'user',
       parts: [
         {
           inlineData: {
-            data: base64Image,
-            mimeType: mimeType   // e.g. "image/jpeg", "image/png"
+            data: base64Data,
+            mimeType: mimeType || 'application/pdf'
           }
         },
         { text: prompt }
@@ -156,26 +163,25 @@ async function extractTextFromImage(buffer, filename, mimeType) {
   });
 
   const text = result.response.text().trim();
-  console.log(`[Vision] "${filename}" → extracted ${text.length} chars`);
+  console.log(`[Vision OCR] "${filename}" → extracted ${text.length} characters`);
 
   if (!text) {
-    throw new Error(`Gemini Vision returned empty response for ${filename}`);
+    throw new Error(`Gemini Multimodal returned empty output for "${filename}".`);
   }
 
   return { text, imageType };
 }
 
-
-// ── Get display label for image type ─────────────────────────────────────
+// ── Display Label Helper ───────────────────────────────────────────────────
 function getImageTypeLabel(imageType) {
   const labels = {
-    ecg:          '🫀 ECG Report',
-    echo:         '🫀 Echo Report',
-    xray:         '🫁 X-Ray',
-    prescription: '💊 Prescription',
-    scan:         '🧠 MRI/CT Scan',
-    lab:          '🧪 Lab Report',
-    handwritten:  '📝 Clinical Notes',
+    ecg:          '🫀 ECG Waveform Analysis',
+    echo:         '🫀 2D Echocardiogram Report',
+    xray:         '🫁 Chest Radiograph / X-Ray',
+    prescription: '💊 Clinical Prescription & Notes',
+    scan:         '🧠 MRI / CT Imaging',
+    lab:          '🧪 Laboratory Pathology Extract',
+    handwritten:  '📝 Handwritten Doctor Notes',
     general:      '📋 Medical Document'
   };
   return labels[imageType] || '📋 Medical Document';
