@@ -224,6 +224,9 @@
           </div>
 
           <div class="patient-identity-right">
+            <button class="btn-clinical-secondary" id="btn-view-chart-records" onclick="openChartRecordsModal()" title="View active encounter chart orders and signed directives">
+              <span>📋</span> Chart Records <span class="tab-counter-badge" id="chart-records-counter" style="background-color:var(--clinical-blue)">0</span>
+            </button>
             <button class="btn-clinical-outline" onclick="showUploadModal()" title="Add PDF, ECG, Echo or Prescriptions">
               <span>📤</span> Ingest Addendum
             </button>
@@ -234,6 +237,7 @@
               <span>✕</span> Discharge
             </button>
           </div>
+
         </div>
 
         <!-- Prominent Allergy & Critical Precautions Alert Banner -->
@@ -401,8 +405,42 @@
     </div>
   </div>
 
+  <!-- ════════════════════════════════════════════════════════════════════════
+       CHART RECORDS & ENCOUNTER ORDERS AUDIT MODAL
+       ════════════════════════════════════════════════════════════════════════ -->
+  <div id="chart-records-modal" class="modal-overlay hidden">
+    <div class="clinical-modal-dialog" style="max-width: 680px;">
+      <div class="modal-header-bar">
+        <div class="modal-title-group">
+          <h3 class="modal-heading">📋 Patient Chart Orders &amp; Encounter Directives</h3>
+          <p class="modal-subheading" id="chart-modal-patient-subtitle">Active encounter orders, completed care directives, and specialist referrals.</p>
+        </div>
+        <button class="modal-close-btn" onclick="closeChartRecordsModal()">✕</button>
+      </div>
+
+      <div class="chart-records-content" id="chart-records-body">
+        <!-- Rendered dynamically by app.js -->
+      </div>
+
+      <div class="modal-actions-footer" style="justify-content: space-between;">
+        <button class="btn-clinical-outline" onclick="copyChartRecordText()">
+          <span>📋</span> Copy to Clipboard (EHR)
+        </button>
+        <div style="display:flex;gap:8px">
+          <button class="btn-clinical-outline" onclick="printPatientBrief()">
+            <span>🖨️</span> Print Order Sheet
+          </button>
+          <button class="btn-clinical-primary" onclick="closeChartRecordsModal()">
+            Done &amp; Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Scripts -->
   <script src="demo-data.js?v=4"></script>
   <script src="app.js?v=4"></script>
 </body>
 </html>
+

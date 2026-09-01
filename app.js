@@ -293,6 +293,9 @@ async function selectPatient(id) {
     state.currentResult = result;
     renderAllTabs(result);
   }
+
+  // Update chart counter badge
+  updateChartCounterBadge();
 }
 
 function renderPatientHeader(patient) {
@@ -521,14 +524,185 @@ function renderOverview(r) {
   `;
 }
 
-function toggleDirective(idx) {
-  const chk = document.getElementById(`dir-${idx}`);
-  if (chk && chk.checked) {
-    showToast('✓ Clinical action checked and logged into chart record');
+// ── Patient Chart Records & Orders Management ──────────────────────────────
+const patientChartRecords = {};
+
+function getPatientChart(patientId) {
+  if (!patientChartRecords[patientId]) {
+    patientChartRecords[patientId] = {
+      orders: [],
+      directives: [],
+      referrals: [],
+      signedBy: 'Dr. Sarah Chen, MD (Cardiology / Internal Medicine)',
+      lastUpdated: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
   }
+  return patientChartRecords[patientId];
 }
 
-// ── Tab 2: Care Journey & Longitudinal Timeline ────────────────────────────
+function updateChartCounterBadge() {
+  const patientId = state.currentPatientId;
+  const badge = document.getElementById('chart-records-counter');
+  if (!badge) return;
+
+  if (!patientId) {
+    badge.textContent = '0';
+    return;
+  }
+
+  const chart = getPatientChart(patientId);
+  const totalItems = chart.orders.length + chart.directives.length + chart.referrals.length;
+  badge.textContent = totalItems;
+}
+
+function toggleDirective(idx) {
+  const chk = document.getElementById(`dir-${idx}`);
+  const patientId = state.currentPatientId;
+  if (!chk || !patientId) return;
+
+  const result = state.currentResult || DEMO_RESULTS[patientId];
+  const directiveText = result?.summary?.actionItems?.[idx] || `Directive #${idx + 1}`;
+  const chart = getPatientChart(patientId);
+
+  if (chk.checked) {
+    if (!chart.directives.some(d => d.text === directiveText)) {
+      chart.directives.push({
+        text: directiveText,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        clinician: 'Dr. Sarah Chen, MD'
+      });
+    }
+    showToast('✓ Clinical action checked and logged into chart record');
+  } else {
+    chart.directives = chart.directives.filter(d => d.text !== directiveText);
+    showToast('Directive removed from chart record');
+  }
+
+  updateChartCounterBadge();
+}
+
+// ── Open / Close Chart Records Modal ───────────────────────────────────────
+function openChartRecordsModal() {
+  const patientId = state.currentPatientId;
+  const patient = DEMO_PATIENTS.find(p => p.id === patientId);
+  const chart = getPatientChart(patientId || 'P001');
+
+  const modal = document.getElementById('chart-records-modal');
+  const bodyEl = document.getElementById('chart-records-body');
+  const subtitleEl = document.getElementById('chart-modal-patient-subtitle');
+
+  if (subtitleEl && patient) {
+    subtitleEl.textContent = `Patient: ${patient.name} (${patient.mrn}) · Encounter: Today · Attending: ${patient.attendingDoctor || 'Dr. Sarah Chen, MD'}`;
+  }
+
+  const ordersListHtml = chart.orders.length > 0 ? chart.orders.map(o => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg-subtle);border:1px solid var(--border-light);border-radius:var(--radius-md);margin-bottom:6px">
+      <div style="font-weight:600;font-size:12.5px;color:var(--navy-900)">🔬 ${o.title}</div>
+      <div style="font-size:11px;font-family:var(--font-mono);color:var(--text-muted)">${o.time} · Ordered</div>
+    </div>
+  `).join('') : '<p style="font-size:12px;color:var(--text-muted);font-style:italic">No active diagnostic orders placed this encounter.</p>';
+
+  const directivesListHtml = chart.directives.length > 0 ? chart.directives.map(d => `
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;padding:8px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:var(--radius-md);margin-bottom:6px">
+      <div style="font-size:12px;color:#065f46;line-height:1.4">✓ <strong>${d.text}</strong></div>
+      <div style="font-size:11px;font-family:var(--font-mono);color:#047857;white-space:nowrap;margin-left:12px">${d.time}</div>
+    </div>
+  `).join('') : '<p style="font-size:12px;color:var(--text-muted);font-style:italic">No checklist directives signed off yet.</p>';
+
+  const referralsListHtml = chart.referrals.length > 0 ? chart.referrals.map(r => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:var(--radius-md);margin-bottom:6px">
+      <div style="font-weight:600;font-size:12.5px;color:#1e40af">⚑ ${r.title}</div>
+      <div style="font-size:11px;font-family:var(--font-mono);color:#2563eb">${r.time} · Dispatched</div>
+    </div>
+  `).join('') : '<p style="font-size:12px;color:var(--text-muted);font-style:italic">No specialty referrals dispatched.</p>';
+
+  if (bodyEl) {
+    bodyEl.innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:14px;max-height:420px;overflow-y:auto;padding-right:4px">
+        
+        <div>
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);margin-bottom:6px">
+            1. Diagnostic &amp; Lab Orders Placed This Encounter
+          </div>
+          ${ordersListHtml}
+        </div>
+
+        <div>
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);margin-bottom:6px">
+            2. Verified Physician Directives &amp; Interventions
+          </div>
+          ${directivesListHtml}
+        </div>
+
+        <div>
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);margin-bottom:6px">
+            3. Specialist Consultations &amp; Referrals
+          </div>
+          ${referralsListHtml}
+        </div>
+
+        <!-- Electronic Signature Block -->
+        <div style="background:#f8fafc;border:1px solid var(--border-medium);border-radius:var(--radius-md);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;margin-top:6px">
+          <div>
+            <div style="font-weight:700;font-size:12px;color:var(--navy-900)">Attending Clinician Electronic Sign-off</div>
+            <div style="font-size:11px;color:var(--text-secondary)">Dr. Sarah Chen, MD (Lic #MD-883492 · Internal Med / Cardio)</div>
+          </div>
+          <div style="font-size:11px;font-family:var(--font-mono);color:var(--status-success);font-weight:700">
+            ✓ CHART AUTHENTICATED
+          </div>
+        </div>
+
+      </div>
+    `;
+  }
+
+  if (modal) modal.classList.remove('hidden');
+}
+
+function closeChartRecordsModal() {
+  document.getElementById('chart-records-modal')?.classList.add('hidden');
+}
+
+function copyChartRecordText() {
+  const patientId = state.currentPatientId;
+  const patient = DEMO_PATIENTS.find(p => p.id === patientId);
+  const chart = getPatientChart(patientId || 'P001');
+
+  let text = `=================================================\n`;
+  text += `CONSULT 360 AI — PATIENT ENCOUNTER ORDERS & DIRECTIVES\n`;
+  text += `Patient: ${patient ? patient.name : 'Unknown'} | MRN: ${patient ? patient.mrn : 'N/A'}\n`;
+  text += `Attending: ${patient ? patient.attendingDoctor : 'Dr. Sarah Chen, MD'}\n`;
+  text += `Date: ${new Date().toLocaleDateString()}\n`;
+  text += `=================================================\n\n`;
+
+  text += `DIAGNOSTIC & LAB ORDERS:\n`;
+  if (chart.orders.length > 0) {
+    chart.orders.forEach(o => { text += `• ${o.title} (Ordered at ${o.time})\n`; });
+  } else {
+    text += `(No diagnostic orders)\n`;
+  }
+
+  text += `\nCOMPLETED PHYSICIAN DIRECTIVES:\n`;
+  if (chart.directives.length > 0) {
+    chart.directives.forEach(d => { text += `[✓] ${d.text} (${d.time})\n`; });
+  } else {
+    text += `(No directives signed off)\n`;
+  }
+
+  text += `\nSPECIALTY REFERRALS:\n`;
+  if (chart.referrals.length > 0) {
+    chart.referrals.forEach(r => { text += `• ${r.title} (${r.time})\n`; });
+  } else {
+    text += `(No referrals)\n`;
+  }
+
+  text += `\nAUTHENTICATION:\nElectronically Signed: Dr. Sarah Chen, MD\n`;
+
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('📋 Chart record copied to clipboard (EHR format)');
+  });
+}
+
 function renderTimeline(events, filter = 'all') {
   const filtered = filter === 'all' ? events : events.filter(e => e.type === filter);
 
@@ -678,18 +852,26 @@ function renderRisk(flags) {
 
 function handleRiskOverride(id, action, title) {
   const bar = document.getElementById(`override-bar-${id}`);
-  if (!bar) return;
+  const patientId = state.currentPatientId;
+  if (!bar || !patientId) return;
+
+  const chart = getPatientChart(patientId);
+  const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
   if (action === 'accept') {
+    chart.orders.push({ title, time: timeStr });
     bar.innerHTML = `<span style="font-size:12px;color:var(--status-success);font-weight:700">✓ Recommendation Accepted &amp; Added to Patient Care Plan Orders</span>`;
     showToast(`✓ "${title}" accepted into care plan orders`);
   } else if (action === 'refer') {
+    chart.referrals.push({ title: `Specialty Consult: ${title}`, time: timeStr });
     bar.innerHTML = `<span style="font-size:12px;color:var(--status-info);font-weight:700">⚑ Specialty Consultation Referral Dispatched</span>`;
     showToast(`⚑ Referral consultation scheduled for "${title}"`);
   } else if (action === 'dismiss') {
     bar.innerHTML = `<span style="font-size:12px;color:var(--text-muted);font-style:italic">✕ Flag dismissed by attending clinician (reason documented)</span>`;
     showToast(`Flag dismissed for "${title}"`);
   }
+
+  updateChartCounterBadge();
 }
 
 // ── Tab 5: Missing Investigations Radar ────────────────────────────────────
@@ -724,8 +906,18 @@ function renderMissing(missing) {
 }
 
 function handleOrderInvestigation(testName) {
-  showToast(`📋 Lab order created for: ${testName}`);
+  const patientId = state.currentPatientId;
+  if (patientId) {
+    const chart = getPatientChart(patientId);
+    chart.orders.push({
+      title: `Lab Order: ${testName}`,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    });
+    updateChartCounterBadge();
+  }
+  showToast(`📋 Lab order created & saved to chart: ${testName}`);
 }
+
 
 // ── Upload & Multi-Report Modal Management ─────────────────────────────────
 function showUploadModal() {
