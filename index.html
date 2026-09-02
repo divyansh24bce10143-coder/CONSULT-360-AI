@@ -13,54 +13,216 @@
 <body class="clinical-theme">
 
   <!-- ════════════════════════════════════════════════════════════════════════
-       TOP CLINICAL NAVIGATION & STATUS BAR
+       HOSPITAL CLINICAL AUTHENTICATION PAGE (CONSULT 360 AI)
+       Professional hospital decision-support gateway.
        ════════════════════════════════════════════════════════════════════════ -->
-  <header id="clinical-topbar">
-    <div class="topbar-left">
-      <div class="hospital-brand">
-        <div class="hospital-crest">⚕</div>
-        <div class="hospital-identity">
-          <div class="app-title">Consult<span class="brand-num">360</span> <span class="badge-clinical">CLINICAL AI</span></div>
-          <div class="hospital-dept">Ambulatory Cardiology &amp; Endocrinology · St. Jude Medical Center</div>
+  <div id="auth-screen" class="auth-page-wrapper">
+    
+    <!-- Institutional Top Context Header -->
+    <header class="auth-hospital-header">
+      <div class="auth-header-inner">
+        <div class="auth-crest-icon">⚕</div>
+        <div>
+          <div class="auth-hospital-title">St. Jude Medical Center</div>
+          <div class="auth-hospital-dept">Clinical Informatics &amp; Ambulatory Care Division</div>
         </div>
       </div>
-    </div>
-
-    <div class="topbar-center">
-      <div class="triage-status-pill" id="global-triage-indicator" onclick="showDashboardView()" title="Click to view full worklist">
-        <span class="pulse-indicator"></span>
-        <span id="triage-quick-stats"><strong>3 Patients</strong> Active in Worklist · <strong>2 Critical Care Gaps</strong></span>
+      <div class="auth-header-secure-badge">
+        <!-- Lucide Shield Icon -->
+        <svg class="lucide-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>
+        </svg>
+        <span>Secure Healthcare Gateway</span>
       </div>
-    </div>
+    </header>
 
-    <div class="topbar-right">
-      <button class="btn-clinical-ghost" onclick="openHotkeysModal()" title="Keyboard shortcuts (Hotkey: ?)">
-        <span>⌨️</span> Shortcuts
-      </button>
-
-      <div class="system-health-badge" id="api-status">
-        <span class="status-dot" id="status-dot"></span>
-        <span id="status-text">Checking Clinical Engine...</span>
-      </div>
-
-      <div class="clinician-profile">
-        <div class="clinician-avatar">SC</div>
-        <div class="clinician-info">
-          <div class="clinician-name">Dr. Sarah Chen, MD</div>
-          <div class="clinician-role">Attending Physician</div>
+    <!-- Centered Card Container -->
+    <main class="auth-main-container">
+      <div class="auth-card" id="auth-card">
+        
+        <!-- Hospital Branding Header -->
+        <div class="auth-card-branding">
+          <div class="auth-brand-logo-row">
+            <div class="auth-brand-crest">⚕</div>
+            <h1 class="auth-app-title">Consult<span class="auth-brand-num">360</span> <span class="auth-badge-ai">AI</span></h1>
+          </div>
+          <p class="auth-app-subtitle">Clinical Decision Support Platform</p>
         </div>
-      </div>
 
-      <button class="btn-clinical-primary" onclick="showUploadModal()">
-        <span class="btn-icon">＋</span> Ingest Patient Records
-      </button>
-    </div>
-  </header>
+        <!-- Form View State -->
+        <form id="auth-form" class="auth-form" onsubmit="handleAuthSubmit(event)">
+          
+          <div class="auth-form-intro">
+            <h2 class="auth-form-title">Physician &amp; Staff Sign In</h2>
+            <p class="auth-form-desc">Enter your institutional credentials to access outpatient charts.</p>
+          </div>
+
+          <!-- Doctor ID Field -->
+          <div class="auth-field-group">
+            <label for="auth-doctor-id" class="auth-field-label">Doctor ID / Staff Identifier</label>
+            <div class="auth-input-wrapper">
+              <!-- Lucide User Icon -->
+              <svg class="auth-input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+              <input type="text" id="auth-doctor-id" class="auth-text-input" placeholder="e.g. DR-CHEN-8834" required autocomplete="username" value="DR-CHEN-8834">
+            </div>
+          </div>
+
+          <!-- Password Field -->
+          <div class="auth-field-group">
+            <div class="auth-label-row">
+              <label for="auth-password" class="auth-field-label">Password</label>
+              <a href="javascript:void(0)" class="auth-link" onclick="handleForgotPassword()">Forgot credentials?</a>
+            </div>
+            <div class="auth-input-wrapper">
+              <!-- Lucide Lock Icon -->
+              <svg class="auth-input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+              <input type="password" id="auth-password" class="auth-text-input" placeholder="Enter secure password" required autocomplete="current-password" value="medicalpassword2026">
+              <button type="button" class="auth-pwd-toggle" onclick="togglePasswordVisibility()" title="Toggle password visibility">
+                <svg id="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Options Row (Remember this device) -->
+          <div class="auth-options-row">
+            <label class="auth-checkbox-label">
+              <input type="checkbox" id="auth-remember" class="auth-checkbox" checked>
+              <span>Remember this device</span>
+            </label>
+            <span class="auth-department-pill">Cardiology / Internal Med</span>
+          </div>
+
+          <!-- Sign In Button -->
+          <button type="submit" id="btn-auth-signin" class="btn-auth-primary">
+            Sign In to Clinical Workspace
+          </button>
+
+          <!-- Quick Demo Autofill Helper -->
+          <div class="auth-demo-helper">
+            <span class="demo-helper-text">Authorized Attending:</span>
+            <button type="button" class="demo-helper-btn" onclick="fillDemoCredentials('DR-CHEN-8834', 'Dr. Sarah Chen, MD')">
+              Dr. Sarah Chen, MD (Cardiology)
+            </button>
+          </div>
+
+          <!-- Security Note with Lucide Shield -->
+          <div class="auth-security-notice">
+            <!-- Lucide Shield Icon -->
+            <svg class="auth-security-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>
+            </svg>
+            <div class="auth-security-text">
+              <strong>Institutional Security Notice:</strong> Only authorized healthcare professionals can access patient records. All access is logged and audited under HIPAA and hospital governance protocols.
+            </div>
+          </div>
+
+        </form>
+
+        <!-- Loading Sequence State (Shown during transition) -->
+        <div id="auth-loading-state" class="auth-loading-state hidden">
+          <div class="auth-spinner-crest">⚕</div>
+          <h3 class="auth-loading-title">Authenticating Clinical Session</h3>
+          <p class="auth-loading-subtitle" id="auth-loading-step-text">Verifying credentials with Medical Directory...</p>
+
+          <div class="auth-progress-track">
+            <div id="auth-progress-bar" class="auth-progress-fill"></div>
+          </div>
+
+          <div class="auth-checklist-progression">
+            <div class="auth-check-item" id="auth-step-1">
+              <span class="auth-check-dot"></span>
+              <span class="auth-check-label">Verifying credentials</span>
+            </div>
+            <div class="auth-check-item" id="auth-step-2">
+              <span class="auth-check-dot"></span>
+              <span class="auth-check-label">Loading today's patients</span>
+            </div>
+            <div class="auth-check-item" id="auth-step-3">
+              <span class="auth-check-dot"></span>
+              <span class="auth-check-label">Fetching AI insights</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- Hospital Footer -->
+    <footer class="auth-hospital-footer">
+      <div class="auth-footer-text">
+        <span>Consult 360 AI · Version 2.4.0 (Build 2026.09)</span>
+        <span class="auth-footer-sep">·</span>
+        <span>© 2026 St. Jude Medical Center · All Rights Reserved</span>
+        <span class="auth-footer-sep">·</span>
+        <span>System Status: <strong style="color:var(--deep-teal)">Operational</strong></span>
+      </div>
+    </footer>
+  </div>
 
   <!-- ════════════════════════════════════════════════════════════════════════
-       APP LAYOUT SHELL
+       MAIN CLINICAL APPLICATION WORKSPACE (REVEALED POST-AUTHENTICATION)
        ════════════════════════════════════════════════════════════════════════ -->
-  <div id="clinical-app-shell">
+  <div id="app-workspace" class="hidden">
+
+    <!-- ── TOP CLINICAL NAVIGATION & STATUS BAR ────────────────────────── -->
+    <header id="clinical-topbar">
+      <div class="topbar-left">
+        <div class="hospital-brand">
+          <div class="hospital-crest">⚕</div>
+          <div class="hospital-identity">
+            <div class="app-title">Consult<span class="brand-num">360</span> <span class="badge-clinical">CLINICAL AI</span></div>
+            <div class="hospital-dept">Ambulatory Cardiology &amp; Endocrinology · St. Jude Medical Center</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="topbar-center">
+        <div class="triage-status-pill" id="global-triage-indicator" onclick="showDashboardView()" title="Click to view full worklist">
+          <span class="pulse-indicator"></span>
+          <span id="triage-quick-stats"><strong>3 Patients</strong> Active in Worklist · <strong>2 Critical Care Gaps</strong></span>
+        </div>
+      </div>
+
+      <div class="topbar-right">
+        <button class="btn-clinical-ghost" onclick="openHotkeysModal()" title="Keyboard shortcuts (Hotkey: ?)">
+          <span>⌨️</span> Shortcuts
+        </button>
+
+        <div class="system-health-badge" id="api-status">
+          <span class="status-dot" id="status-dot"></span>
+          <span id="status-text">Checking Clinical Engine...</span>
+        </div>
+
+        <div class="clinician-profile" onclick="handleSignOut()" title="Click to Sign Out">
+          <div class="clinician-avatar">SC</div>
+          <div class="clinician-info">
+            <div class="clinician-name">Dr. Sarah Chen, MD</div>
+            <div class="clinician-role">Attending Physician · <span style="color:var(--deep-teal);font-weight:700">Sign Out</span></div>
+          </div>
+        </div>
+
+        <button class="btn-clinical-ghost" onclick="handleSignOut()" title="Sign out to hospital login gateway" style="padding:6px 10px">
+          <span>🚪</span> Sign Out
+        </button>
+
+        <button class="btn-clinical-primary" onclick="showUploadModal()">
+          <span class="btn-icon">＋</span> Ingest Patient Records
+        </button>
+      </div>
+    </header>
+
+    <!-- ── APP LAYOUT SHELL ───────────────────────────────────────────── -->
+    <div id="clinical-app-shell">
+
 
     <!-- ── SIDEBAR WORKLIST QUEUE ────────────────────────────────────────── -->
     <aside id="clinical-sidebar">
@@ -513,9 +675,12 @@
     </div>
   </div>
 
+  </div> <!-- End #app-workspace -->
+
   <!-- Scripts -->
-  <script src="demo-data.js?v=6"></script>
-  <script src="app.js?v=6"></script>
+  <script src="demo-data.js?v=7"></script>
+  <script src="app.js?v=7"></script>
 </body>
 </html>
+
 

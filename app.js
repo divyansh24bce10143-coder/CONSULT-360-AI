@@ -7,6 +7,7 @@
 // ── Application State ───────────────────────────────────────────────────────
 const state = {
   serverOnline: false,
+  authenticated: false,
   currentPatientId: null,
   currentResult: null,
   currentView: 'dashboard',      // 'dashboard' | 'patient'
@@ -24,11 +25,139 @@ if (typeof pdfjsLib !== 'undefined') {
 
 // ── Initialization ─────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+  initAuthGateway();
   renderSidebarQueue();
   renderDashboardWorklist();
   checkServerHealth();
   setupUploadArea();
 });
+
+// ── Hospital Clinical Authentication Gateway ───────────────────────────────
+function initAuthGateway() {
+  const isAuth = sessionStorage.getItem('consult360_auth') === 'true' || 
+                 localStorage.getItem('consult360_auth') === 'true';
+
+  const authScreen = document.getElementById('auth-screen');
+  const appWorkspace = document.getElementById('app-workspace');
+
+  if (isAuth) {
+    state.authenticated = true;
+    if (authScreen) authScreen.classList.add('hidden');
+    if (appWorkspace) appWorkspace.classList.remove('hidden');
+  } else {
+    state.authenticated = false;
+    if (authScreen) authScreen.classList.remove('hidden');
+    if (appWorkspace) appWorkspace.classList.add('hidden');
+  }
+}
+
+async function handleAuthSubmit(event) {
+  event.preventDefault();
+  const doctorId = document.getElementById('auth-doctor-id')?.value.trim();
+  const password = document.getElementById('auth-password')?.value.trim();
+  const remember = document.getElementById('auth-remember')?.checked;
+
+  if (!doctorId || !password) {
+    showToast('⚠️ Please enter Doctor ID and Password', 'error');
+    return;
+  }
+
+  const authForm = document.getElementById('auth-form');
+  const loadingState = document.getElementById('auth-loading-state');
+  const stepText = document.getElementById('auth-loading-step-text');
+  const progressBar = document.getElementById('auth-progress-bar');
+  const step1 = document.getElementById('auth-step-1');
+  const step2 = document.getElementById('auth-step-2');
+  const step3 = document.getElementById('auth-step-3');
+
+  // Transition to Loading Sequence
+  if (authForm) authForm.classList.add('hidden');
+  if (loadingState) loadingState.classList.remove('hidden');
+
+  // Sequence Step 1: Verifying Credentials (0ms)
+  if (step1) step1.className = 'auth-check-item active';
+  if (stepText) stepText.textContent = 'Verifying credentials with Medical Directory...';
+  if (progressBar) progressBar.style.width = '33%';
+
+  await new Promise(r => setTimeout(r, 650));
+
+  // Sequence Step 2: Loading Today's Patients (650ms)
+  if (step1) step1.className = 'auth-check-item done';
+  if (step2) step2.className = 'auth-check-item active';
+  if (stepText) stepText.textContent = 'Loading today\'s outpatient triage queue...';
+  if (progressBar) progressBar.style.width = '66%';
+
+  await new Promise(r => setTimeout(r, 650));
+
+  // Sequence Step 3: Fetching AI Insights (1300ms)
+  if (step2) step2.className = 'auth-check-item done';
+  if (step3) step3.className = 'auth-check-item active';
+  if (stepText) stepText.textContent = 'Fetching clinical AI decision support models...';
+  if (progressBar) progressBar.style.width = '100%';
+
+  await new Promise(r => setTimeout(r, 600));
+  if (step3) step3.className = 'auth-check-item done';
+
+  // Complete Authentication
+  state.authenticated = true;
+  if (remember) {
+    localStorage.setItem('consult360_auth', 'true');
+  }
+  sessionStorage.setItem('consult360_auth', 'true');
+
+  await new Promise(r => setTimeout(r, 300));
+
+  // Smooth Reveal of Application Workspace
+  const authScreen = document.getElementById('auth-screen');
+  const appWorkspace = document.getElementById('app-workspace');
+  if (authScreen) authScreen.classList.add('hidden');
+  if (appWorkspace) appWorkspace.classList.remove('hidden');
+
+  renderSidebarQueue();
+  renderDashboardWorklist();
+  showToast('✓ Welcome, Dr. Sarah Chen, MD · Ambulatory Cardiology');
+}
+
+function fillDemoCredentials(id, name) {
+  const idInput = document.getElementById('auth-doctor-id');
+  const pwdInput = document.getElementById('auth-password');
+  if (idInput) idInput.value = id;
+  if (pwdInput) pwdInput.value = 'medicalpassword2026';
+  showToast(`Autofilled credentials for ${name}`);
+}
+
+function togglePasswordVisibility() {
+  const pwdInput = document.getElementById('auth-password');
+  if (!pwdInput) return;
+  const isPwd = pwdInput.type === 'password';
+  pwdInput.type = isPwd ? 'text' : 'password';
+}
+
+function handleForgotPassword() {
+  alert('Hospital IT Support Notice:\n\nTo reset medical staff credentials or request hardware MFA tokens, please contact St. Jude Clinical Informatics Helpdesk at extension 4400 or visit Medical Administration (Room 102).');
+}
+
+function handleSignOut() {
+  const confirmed = confirm('Sign out of Consult 360 AI clinical session?');
+  if (!confirmed) return;
+
+  state.authenticated = false;
+  sessionStorage.removeItem('consult360_auth');
+  localStorage.removeItem('consult360_auth');
+
+  const authScreen = document.getElementById('auth-screen');
+  const appWorkspace = document.getElementById('app-workspace');
+  const authForm = document.getElementById('auth-form');
+  const loadingState = document.getElementById('auth-loading-state');
+
+  if (loadingState) loadingState.classList.add('hidden');
+  if (authForm) authForm.classList.remove('hidden');
+  if (appWorkspace) appWorkspace.classList.add('hidden');
+  if (authScreen) authScreen.classList.remove('hidden');
+
+  showToast('Signed out of clinical session');
+}
+
 
 // ── Server Health Check ───────────────────────────────────────────────────
 async function checkServerHealth() {
