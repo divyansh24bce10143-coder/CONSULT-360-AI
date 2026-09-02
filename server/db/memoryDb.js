@@ -167,20 +167,35 @@ class HospitalDatabase {
   }
 
   // ── DASHBOARD AGGREGATION ───────────────────────────────────────────────
-  getDashboardStats() {
-    const totalPatients = this.data.patients.length;
-    const criticalPatients = this.data.patients.filter(p => p.riskLevel === 'critical').length;
-    const overdueFollowUps = this.data.followUps.filter(f => f.status === 'overdue').length;
-    const pendingInvestigations = this.data.investigations.filter(i => i.status === 'attention' || i.status === 'pending').length;
+  getDashboardStats(doctorId = '') {
+    let patientPool = this.data.patients;
+    let followUpPool = this.data.followUps;
+    let appointmentPool = this.data.appointments;
+    let investigationPool = this.data.investigations;
+
+    if (doctorId) {
+      patientPool = patientPool.filter(p => p.assignedDoctorId === doctorId);
+      followUpPool = followUpPool.filter(f => f.assignedDoctorId === doctorId);
+      appointmentPool = appointmentPool.filter(a => a.doctorId === doctorId);
+      investigationPool = investigationPool.filter(i => {
+        const p = this.data.patients.find(pt => pt.id === i.patientId);
+        return p && p.assignedDoctorId === doctorId;
+      });
+    }
+
+    const totalPatients = patientPool.length;
+    const criticalPatients = patientPool.filter(p => p.riskLevel === 'critical').length;
+    const overdueFollowUps = followUpPool.filter(f => f.status === 'overdue').length;
+    const pendingInvestigations = investigationPool.filter(i => i.status === 'attention' || i.status === 'pending').length;
     
     // Today's appointments
-    const todayAppointments = this.data.appointments.filter(a => a.appointmentDate === '2026-09-02');
+    const todayAppointments = appointmentPool.filter(a => a.appointmentDate === '2026-09-02');
     
     // Recent audit activity
     const recentActivity = this.data.auditLogs.slice(0, 10);
 
     // High risk patient list
-    const highRiskList = this.data.patients.filter(p => p.riskLevel === 'critical').slice(0, 8);
+    const highRiskList = patientPool.filter(p => p.riskLevel === 'critical').slice(0, 8);
 
     return {
       kpi: {
@@ -190,6 +205,12 @@ class HospitalDatabase {
         pendingInvestigations,
         todayAppointmentsCount: todayAppointments.length
       },
+      hospitalKpi: {
+        totalPatients: this.data.patients.length,
+        criticalAttentionRequired: this.data.patients.filter(p => p.riskLevel === 'critical').length,
+        overdueFollowUps: this.data.followUps.filter(f => f.status === 'overdue').length,
+        pendingInvestigations: this.data.investigations.filter(i => i.status === 'attention' || i.status === 'pending').length
+      },
       todayAppointments: todayAppointments.slice(0, 10),
       highRiskPatients: highRiskList,
       recentActivity,
@@ -197,6 +218,7 @@ class HospitalDatabase {
       systemVersion: this.data.metadata.version
     };
   }
+
 
   // ── INVESTIGATIONS ──────────────────────────────────────────────────────
   getInvestigations({ status = '', patientId = '' } = {}) {

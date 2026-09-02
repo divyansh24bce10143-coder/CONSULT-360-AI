@@ -2991,5 +2991,63 @@ body.clinical-theme {
   margin: 0;
 }
 
+/* ── Doctor Scope Toggles (My Patients vs All Hospital) ─────────────────── */
+.sidebar-scope-toggle {
+  display: flex;
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 2px;
+  margin-bottom: 10px;
+}
+
+.scope-pill-btn {
+  flex: 1;
+  background: none;
+  border: none;
+  padding: 5px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: center;
+}
+
+.scope-pill-btn.active {
+  background-color: #ffffff;
+  color: var(--deep-teal);
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.dashboard-scope-toggle {
+  display: inline-flex;
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  padding: 2px;
+}
+
+.scope-tab-btn {
+  background: none;
+  border: none;
+  padding: 4px 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.scope-tab-btn.active {
+  background-color: var(--deep-teal);
+  color: #ffffff;
+  font-weight: 700;
+}
+
+
 
 

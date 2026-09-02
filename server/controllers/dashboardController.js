@@ -8,12 +8,15 @@ const db = require('../db/memoryDb');
 class DashboardController {
   async getDashboard(req, res) {
     try {
-      const stats = db.getDashboardStats();
+      const doctorId = req.query.doctorId || (req.doctor ? req.doctor.doctorId : '');
+      const stats = db.getDashboardStats(doctorId);
       return res.json({
         status: 'ok',
+        doctorId: doctorId || 'ALL',
         timestamp: new Date().toISOString(),
         ...stats
       });
+
     } catch (err) {
       console.error('[Dashboard Controller Error]', err);
       return res.status(500).json({ error: 'Failed to aggregate hospital dashboard metrics.' });

@@ -9,6 +9,7 @@
 const state = {
   serverOnline: false,
   authenticated: false,
+  scopeMode: 'my',               // 'my' | 'all'
   doctor: {
     doctorId: 'DOC1001',
     name: 'Dr. Amit Sharma',
@@ -27,6 +28,7 @@ const state = {
   searchQuery: '',
   selectedFiles: []              // Array of File objects staged for upload
 };
+
 
 // ── PDF.js Worker Configuration ────────────────────────────────────────────
 if (typeof pdfjsLib !== 'undefined') {
@@ -392,30 +394,52 @@ function showPatientView() {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+// ── Doctor Scope Mode (My Patients vs All Hospital) ───────────────────────
+function setScopeMode(mode) {
+  state.scopeMode = mode;
+
+  // Update UI toggles
+  document.getElementById('sidebar-scope-my')?.classList.toggle('active', mode === 'my');
+  document.getElementById('sidebar-scope-all')?.classList.toggle('active', mode === 'all');
+  document.getElementById('dash-scope-my')?.classList.toggle('active', mode === 'my');
+  document.getElementById('dash-scope-all')?.classList.toggle('active', mode === 'all');
+
+  const subtitle = document.getElementById('dashboard-subtitle');
+  if (subtitle) {
+    subtitle.textContent = mode === 'my'
+      ? `Active outpatient worklist assigned to ${state.doctor.name || 'Attending Physician'} (${state.doctor.department || 'Clinical Department'}).`
+      : 'Hospital-wide outpatient census across all 10 clinical specialties at St. Jude Medical Center.';
+  }
+
+  renderSidebarQueue();
+  renderDashboardWorklist();
+  showToast(mode === 'my' ? `Switched to ${state.doctor.name}'s assigned patients` : 'Viewing all hospital patients');
+}
+
 // ── Dashboard / Worklist Rendering ─────────────────────────────────────────
 function renderDashboardWorklist() {
   const tbody = document.getElementById('worklist-tbody');
   if (!tbody) return;
 
-  const patientsList = state.patients || [];
+  const allPatients = state.patients || [];
+  const currentDocId = state.doctor?.doctorId || 'DOC1001';
 
-  // Calculate KPI Counts from live stats or list
+  // Apply Doctor Scope (My Patients vs All Hospital)
+  const scopedPatients = state.scopeMode === 'my'
+    ? allPatients.filter(p => p.assignedDoctorId === currentDocId)
+    : allPatients;
+
+  // Calculate KPI Counts based on current scope
   let criticalCount = 0;
   let overdueCount = 0;
   let pendingCount = 0;
 
-  if (state.dashboardStats?.kpi) {
-    criticalCount = state.dashboardStats.kpi.criticalAttentionRequired;
-    overdueCount  = state.dashboardStats.kpi.overdueFollowUps;
-    pendingCount  = state.dashboardStats.kpi.pendingInvestigations;
-  } else {
-    patientsList.forEach(p => {
-      if (p.riskLevel === 'critical') criticalCount++;
-      if (p.careJourney?.some(j => j.status === 'missed' || j.status === 'attention')) overdueCount++;
-      const res = state.results[p.id];
-      if (res?.missingInvestigations) pendingCount += res.missingInvestigations.length;
-    });
-  }
+  scopedPatients.forEach(p => {
+    if (p.riskLevel === 'critical') criticalCount++;
+    if (p.careJourney?.some(j => j.status === 'missed' || j.status === 'attention')) overdueCount++;
+    const res = state.results[p.id];
+    if (res?.missingInvestigations) pendingCount += res.missingInvestigations.length;
+  });
 
   const kpiCritEl = document.getElementById('kpi-critical-count');
   const kpiOverEl = document.getElementById('kpi-overdue-count');
@@ -425,15 +449,15 @@ function renderDashboardWorklist() {
   if (kpiCritEl) kpiCritEl.textContent = criticalCount;
   if (kpiOverEl) kpiOverEl.textContent = overdueCount;
   if (kpiPendEl) kpiPendEl.textContent = pendingCount;
-  if (kpiTotEl)  kpiTotEl.textContent  = patientsList.length;
+  if (kpiTotEl)  kpiTotEl.textContent  = scopedPatients.length;
 
   const quickStats = document.getElementById('triage-quick-stats');
   if (quickStats) {
-    quickStats.innerHTML = `<strong>${patientsList.length} Outpatients</strong> in Queue · <strong>${criticalCount} Critical</strong> · <strong>${pendingCount} Pending Labs</strong>`;
+    quickStats.innerHTML = `<strong>${scopedPatients.length} ${state.scopeMode === 'my' ? 'Assigned' : 'Hospital'} Patients</strong> · <strong>${criticalCount} Critical</strong> · <strong>${pendingCount} Pending Labs</strong>`;
   }
 
-  // Filter patients for the dashboard table
-  const filtered = patientsList.filter(p => {
+  // Filter patients for the dashboard table (triage tab)
+  const filtered = scopedPatients.filter(p => {
     if (state.dashboardFilter === 'critical') return p.riskLevel === 'critical';
     if (state.dashboardFilter === 'overdue') return p.careJourney?.some(j => j.status === 'missed' || j.status === 'attention');
     if (state.dashboardFilter === 'pending-tests') {
@@ -447,7 +471,7 @@ function renderDashboardWorklist() {
     tbody.innerHTML = `
       <tr>
         <td colspan="7" style="text-align:center;padding:32px;color:var(--text-muted)">
-          No patients match the selected filter criteria.
+          No patients match the selected filter criteria in this view.
         </td>
       </tr>`;
     return;
@@ -487,7 +511,7 @@ function renderDashboardWorklist() {
         </td>
         <td>
           <div style="font-family:var(--font-mono);font-size:11.5px;color:var(--text-secondary)">${p.lastVisit || 'Today'}</div>
-          <div style="font-size:10.5px;color:var(--text-muted)">${p.attendingDoctor ? p.attendingDoctor.split(',')[0] : 'Dr. Amit Sharma'}</div>
+          <div style="font-size:10.5px;color:var(--text-muted)">${p.attendingDoctor ? p.attendingDoctor.split(',')[0] : state.doctor.name}</div>
         </td>
         <td style="text-align:right">
           <button class="table-action-btn" onclick="selectPatient('${p.id}')">
@@ -507,7 +531,7 @@ function filterDashboardTable(filterType) {
   const labelEl = document.getElementById('table-filter-label');
   if (labelEl) {
     const labels = {
-      'all': 'All Active Records',
+      'all': state.scopeMode === 'my' ? 'All Assigned Records' : 'All Hospital Records',
       'critical': 'Filtered: Critical Attention',
       'overdue': 'Filtered: Overdue Follow-ups',
       'pending-tests': 'Filtered: Pending Investigations'
@@ -527,12 +551,19 @@ function setTableFilter(filterType, btn) {
 function renderSidebarQueue() {
   const list = document.getElementById('patient-list');
   const countBadge = document.getElementById('sidebar-patient-count');
+  const myCountBadge = document.getElementById('my-patients-count');
   if (!list) return;
 
-  const patientsList = state.patients || [];
-  if (countBadge) countBadge.textContent = patientsList.length;
+  const allPatients = state.patients || [];
+  const currentDocId = state.doctor?.doctorId || 'DOC1001';
 
-  let filtered = patientsList;
+  // Count doctor's assigned patients
+  const myPatients = allPatients.filter(p => p.assignedDoctorId === currentDocId);
+  if (myCountBadge) myCountBadge.textContent = myPatients.length;
+
+  // Apply current scope
+  let filtered = state.scopeMode === 'my' ? myPatients : allPatients;
+  if (countBadge) countBadge.textContent = filtered.length;
 
   // Search filter
   if (state.searchQuery) {
@@ -552,7 +583,7 @@ function renderSidebarQueue() {
   }
 
   if (filtered.length === 0) {
-    list.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text-muted);font-size:12px">No patients found.</div>`;
+    list.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text-muted);font-size:12px">No assigned patients found in this filter.</div>`;
     return;
   }
 
@@ -576,6 +607,7 @@ function renderSidebarQueue() {
     </div>
   `).join('');
 }
+
 
 function filterPatients(query) {
   state.searchQuery = query.trim();

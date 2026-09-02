@@ -250,8 +250,15 @@
       <div class="sidebar-header">
         <div class="sidebar-title-row">
           <span class="sidebar-heading">Outpatient Queue</span>
-          <span class="patient-count-badge" id="sidebar-patient-count">3</span>
+          <span class="patient-count-badge" id="sidebar-patient-count">10</span>
         </div>
+
+        <!-- Doctor Scope Toggle -->
+        <div class="sidebar-scope-toggle">
+          <button class="scope-pill-btn active" id="sidebar-scope-my" onclick="setScopeMode('my')">My Assigned (<span id="my-patients-count">10</span>)</button>
+          <button class="scope-pill-btn" id="sidebar-scope-all" onclick="setScopeMode('all')">All Hospital (100)</button>
+        </div>
+
         <div class="sidebar-search-box">
           <span class="search-icon">🔍</span>
           <input type="text" id="sidebar-search-input" placeholder="Search patient or MRN..." oninput="filterPatients(this.value)">
@@ -286,8 +293,15 @@
         <!-- Dashboard Header & Triage Summary -->
         <div class="dashboard-header-bar">
           <div>
-            <h1 class="page-title">Clinical Triage &amp; Worklist Dashboard</h1>
-            <p class="page-subtitle">Patients requiring immediate review, overdue investigation follow-ups, and active care gaps.</p>
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px">
+              <h1 class="page-title">Clinical Triage &amp; Worklist Dashboard</h1>
+              <!-- Scope Badge Toggle in Dashboard -->
+              <div class="dashboard-scope-toggle">
+                <button class="scope-tab-btn active" id="dash-scope-my" onclick="setScopeMode('my')">My Assigned Worklist</button>
+                <button class="scope-tab-btn" id="dash-scope-all" onclick="setScopeMode('all')">Hospital-Wide Census</button>
+              </div>
+            </div>
+            <p class="page-subtitle" id="dashboard-subtitle">Patients requiring immediate review, overdue investigation follow-ups, and active care gaps.</p>
           </div>
           <div class="dashboard-actions">
             <button class="btn-clinical-secondary" onclick="exportWorklistReport()">
@@ -298,6 +312,7 @@
             </button>
           </div>
         </div>
+
 
         <!-- Triage Summary KPI Bar -->
         <div class="triage-kpi-grid">

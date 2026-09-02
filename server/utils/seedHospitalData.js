@@ -198,55 +198,12 @@ function generateHospitalDatabase() {
     }
   ];
 
-  // ── 3. Clinical Name Lists & Seed Dictionaries ─────────────────────────────
-  const firstNames = [
-    'Rajesh', 'Priya', 'Arjun', 'Sunita', 'Vikram', 'Meera', 'Rohan', 'Ananya', 'Suresh', 'Deepa',
-    'Amit', 'Kavita', 'Ramesh', 'Pooja', 'Manoj', 'Sneha', 'Naveen', 'Divya', 'Sanjay', 'Geeta',
-    'Alok', 'Swati', 'Harish', 'Neha', 'Gaurav', 'Shilpa', 'Rahul', 'Aarti', 'Kiran', 'Pallavi',
-    'Vikas', 'Rashmi', 'Pradeep', 'Jyoti', 'Ajay', 'Renu', 'Ashok', 'Seema', 'Santosh', 'Manju',
-    'Kishore', 'Anita', 'Dinesh', 'Usha', 'Mukesh', 'Radha', 'Vijay', 'Shashi', 'Gopal', 'Lata',
-    'John', 'Mary', 'David', 'Sarah', 'James', 'Patricia', 'Robert', 'Jennifer', 'Michael', 'Linda',
-    'William', 'Elizabeth', 'Richard', 'Barbara', 'Joseph', 'Susan', 'Thomas', 'Jessica', 'Charles', 'Sarah',
-    'Christopher', 'Karen', 'Daniel', 'Nancy', 'Matthew', 'Lisa', 'Anthony', 'Betty', 'Mark', 'Margaret',
-    'Donald', 'Sandra', 'Steven', 'Ashley', 'Paul', 'Kimberly', 'Andrew', 'Emily', 'Joshua', 'Donna',
-    'Kenneth', 'Michelle', 'Kevin', 'Dorothy', 'Brian', 'Carol', 'George', 'Amanda', 'Edward', 'Melissa'
-  ];
-
-  const lastNames = [
-    'Kumar', 'Sharma', 'Mehta', 'Patel', 'Singh', 'Iyer', 'Reddy', 'Gupta', 'Verma', 'Nair',
-    'Joshi', 'Chopra', 'Rao', 'Bose', 'Mishra', 'Deshmukh', 'Saxena', 'Pillai', 'Menon', 'Bhat',
-    'Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez',
-    'Hernandez', 'Lopez', 'Gonzalez', 'Wilson', 'Anderson', 'Thomas', 'Taylor', 'Moore', 'Jackson', 'Martin'
-  ];
-
-  const bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
   const cities = ['New Delhi', 'Mumbai', 'Bengaluru', 'Chennai', 'Hyderabad', 'Kolkata', 'Pune', 'Ahmedabad', 'Jaipur', 'Lucknow'];
 
-  const conditionsPool = [
-    { name: 'Type 2 Diabetes Mellitus with Microalbuminuria', cat: 'Endocrine', risk: 'critical', icd: 'E11.69', dr: 'DOC1003' },
-    { name: 'Coronary Artery Disease & Post-PCI Stent (LAD)', cat: 'Cardiology', risk: 'critical', icd: 'I25.10', dr: 'DOC1002' },
-    { name: 'Heart Failure with Reduced Ejection Fraction (HFrEF 35%)', cat: 'Cardiology', risk: 'critical', icd: 'I50.22', dr: 'DOC1002' },
-    { name: 'Chronic Kidney Disease Stage 3b with Hypertension', cat: 'Nephrology', risk: 'critical', icd: 'N18.32', dr: 'DOC1006' },
-    { name: 'Severe Refractory Hypertension (Stage 2)', cat: 'Cardiology', risk: 'critical', icd: 'I10', dr: 'DOC1002' },
-    { name: 'Persistent Atrial Fibrillation with Tachycardia', cat: 'Cardiology', risk: 'critical', icd: 'I48.1', dr: 'DOC1002' },
-    { name: 'Diabetic Foot Ulcer (Wagner Grade 2) with Neuropathy', cat: 'Endocrine', risk: 'critical', icd: 'E11.621', dr: 'DOC1003' },
-    { name: 'COPD Gold Group D with Acute Exacerbation', cat: 'Pulmonology', risk: 'critical', icd: 'J44.1', dr: 'DOC1007' },
-    { name: 'Non-Alcoholic Steatohepatitis (NASH) with Early Fibrosis', cat: 'Gastroenterology', risk: 'medium', icd: 'K75.81', dr: 'DOC1008' },
-    { name: 'Essential Hypertension under Dual Therapy', cat: 'General Medicine', risk: 'medium', icd: 'I10', dr: 'DOC1001' },
-    { name: 'Type 2 Diabetes with Adequate Glycemic Control', cat: 'Endocrine', risk: 'low', icd: 'E11.9', dr: 'DOC1003' },
-    { name: 'Primary Hypothyroidism under Levothyroxine Replacement', cat: 'Endocrine', risk: 'low', icd: 'E03.9', dr: 'DOC1003' },
-    { name: 'Moderate Persistent Asthma with Inhaler Regimen', cat: 'Pulmonology', risk: 'medium', icd: 'J45.40', dr: 'DOC1007' },
-    { name: 'Generalized Anxiety Disorder with Somatoform Palpitations', cat: 'General Medicine', risk: 'low', icd: 'F41.1', dr: 'DOC1001' },
-    { name: 'Osteoarthritis of Bilateral Knees (Kellgren-Lawrence Grade 3)', cat: 'Orthopedics', risk: 'low', icd: 'M17.0', dr: 'DOC1009' },
-    { name: 'Chronic Stable Angina Pectoris (CCS Class II)', cat: 'Cardiology', risk: 'medium', icd: 'I20.9', dr: 'DOC1002' },
-    { name: 'Hypercholesterolemia with Elevated LDL-C (182 mg/dL)', cat: 'Cardiology', risk: 'medium', icd: 'E78.00', dr: 'DOC1002' },
-    { name: 'Chronic Migraine with Visual Aura', cat: 'Neurology', risk: 'low', icd: 'G43.109', dr: 'DOC1004' }
-  ];
-
   const allergiesPool = [
-    ['Penicillin (Anaphylactoid rash)'],
+    ['Penicillin (Severe cutaneous reaction / rash)'],
     ['Sulfa Drugs (Stevens-Johnson syndrome risk)'],
-    ['Aspirin / NSAIDs (Bronchospasm / Gastritis)'],
+    ['Aspirin / NSAIDs (Severe gastritis / ulceration)'],
     ['Iodinated Radiocontrast Media (Urticaria)'],
     ['ACE Inhibitors (Severe dry cough & angioedema)'],
     ['Codeine / Opioids (Severe nausea & dizziness)'],
@@ -255,6 +212,161 @@ function generateHospitalDatabase() {
     [],
     []
   ];
+
+  // ── 3. Doctor-Specific Clinical Cohort Definitions (10 Patients per Doctor) ─
+  const doctorCohorts = {
+
+    'DOC1001': { // Dr. Amit Sharma — General Medicine
+      dept: 'General Medicine',
+      patients: [
+        { name: 'Rajesh Kumar', age: 58, gender: 'Male', blood: 'B+', risk: 'critical', score: 88, cond: 'Type 2 Diabetes + Severe Hypertension + Proteinuria', overdue: 'eGFR & Urine ACR overdue by 168 days' },
+        { name: 'Ramesh Gupta', age: 52, gender: 'Male', blood: 'O+', risk: 'critical', score: 82, cond: 'Severe Metabolic Syndrome & Chronic Fatigue', overdue: 'Comprehensive Lipid & Fasting Insulin due' },
+        { name: 'Pooja Joshi', age: 39, gender: 'Female', blood: 'A+', risk: 'medium', score: 64, cond: 'Refractory Iron Deficiency Anemia & Hypovitaminosis D', overdue: 'Serum Ferritin & Iron Studies overdue by 45 days' },
+        { name: 'Dinesh Deshmukh', age: 46, gender: 'Male', blood: 'AB+', risk: 'critical', score: 85, cond: 'Pyrexia of Unknown Origin (PUO) & Infective Mononucleosis', overdue: 'Autoimmune & Infectious Serology panel pending' },
+        { name: 'Seema Saxena', age: 41, gender: 'Female', blood: 'B-', risk: 'low', score: 35, cond: 'Generalized Anxiety with Somatoform Palpitations', overdue: 'Holter Monitoring completed; routine review' },
+        { name: 'James Wilson', age: 64, gender: 'Male', blood: 'O-', risk: 'critical', score: 89, cond: 'Multi-morbidity: T2DM + Dyslipidemia + Gouty Arthritis', overdue: 'Serum Uric Acid & HbA1c panel overdue by 90 days' },
+        { name: 'Barbara Taylor', age: 67, gender: 'Female', blood: 'A-', risk: 'medium', score: 68, cond: 'Polymyalgia Rheumatica & Temporal Arteritis Evaluation', overdue: 'ESR & CRP inflammatory markers due today' },
+        { name: 'Matthew Thomas', age: 55, gender: 'Male', blood: 'B+', risk: 'medium', score: 60, cond: 'Resistant Hypertension under Triple Drug Regimen', overdue: '24-hour Ambulatory Blood Pressure Monitoring due' },
+        { name: 'Amanda Martin', age: 33, gender: 'Female', blood: 'O+', risk: 'low', score: 28, cond: 'Chronic Sinusitis & Bronchial Hyperreactivity', overdue: 'Allergy profile complete; follow-up scheduled' },
+        { name: 'Harold Finch', age: 74, gender: 'Male', blood: 'AB-', risk: 'critical', score: 91, cond: 'Geriatric Polypharmacy & Orthostatic Hypotension', overdue: 'Medication Reconciliation & Fall Risk Audit overdue' }
+      ]
+    },
+    'DOC1002': { // Dr. Sarah Chen — Cardiology
+      dept: 'Cardiology',
+      patients: [
+        { name: 'Priya Sharma', age: 44, gender: 'Female', blood: 'O+', risk: 'medium', score: 62, cond: 'Hypothyroidism + Refractory Fatigue & Post-Viral Fatigue', overdue: 'Repeat Free T3/T4 & Ferritin panel due' },
+        { name: 'Arjun Mehta', age: 62, gender: 'Male', blood: 'A+', risk: 'critical', score: 92, cond: 'CAD + Post-CABG + Exertional Angina & Dyspnea', overdue: '2D Echocardiogram (LVEF) overdue by 120 days' },
+        { name: 'Vikram Reddy', age: 59, gender: 'Male', blood: 'B+', risk: 'critical', score: 94, cond: 'Heart Failure with Reduced Ejection Fraction (HFrEF 35%)', overdue: 'NT-proBNP & Potassium monitoring overdue by 30 days' },
+        { name: 'Sneha Chopra', age: 66, gender: 'Female', blood: 'AB+', risk: 'critical', score: 87, cond: 'Persistent Atrial Fibrillation with Rapid Ventricular Rate', overdue: 'INR / DOAC compliance check & Holter overdue' },
+        { name: 'Ajay Mishra', age: 53, gender: 'Male', blood: 'O+', risk: 'medium', score: 65, cond: 'Post-PCI Drug-Eluting Stent (LAD) & Dyslipidemia', overdue: 'Stress Myocardial Perfusion scan scheduled' },
+        { name: 'Kishore Bhat', age: 61, gender: 'Male', blood: 'A-', risk: 'critical', score: 86, cond: 'Severe Refractory Stage 2 Hypertension with LVH', overdue: 'Renal Artery Doppler ultrasound overdue' },
+        { name: 'Robert Martinez', age: 71, gender: 'Male', blood: 'B-', risk: 'critical', score: 90, cond: 'Severe Calcific Aortic Valve Stenosis with Syncope', overdue: 'Transesophageal Echo (TEE) awaiting schedule' },
+        { name: 'Nancy Davis', age: 48, gender: 'Female', blood: 'O-', risk: 'medium', score: 58, cond: 'Non-obstructive Hypertrophic Cardiomyopathy (HCM)', overdue: 'Genetic cardiac panel & annual Holter due' },
+        { name: 'Christopher Gonzalez', age: 56, gender: 'Male', blood: 'AB-', risk: 'medium', score: 63, cond: 'Frequent Premature Ventricular Contractions & Non-sustained VT', overdue: 'Electrophysiology (EP) consult pending' },
+        { name: 'Steven Anderson', age: 60, gender: 'Male', blood: 'A+', risk: 'critical', score: 88, cond: 'Severe Hypercholesterolemia (LDL 195) & CAC Score 480', overdue: 'Coronary CT Angiography overdue by 60 days' }
+      ]
+    },
+    'DOC1003': { // Dr. Rajesh Verma — Endocrinology
+      dept: 'Endocrinology & Diabetology',
+      patients: [
+        { name: 'Meera Iyer', age: 28, gender: 'Female', blood: 'A+', risk: 'critical', score: 84, cond: 'Type 1 Diabetes on Continuous Glucose Monitor & Basal-Bolus', overdue: 'CGM Time-in-Range audit & Microalbumin due' },
+        { name: 'Manoj Pillai', age: 63, gender: 'Male', blood: 'B+', risk: 'critical', score: 95, cond: 'Diabetic Foot Ulcer (Wagner Grade 2) with Neuropathy', overdue: 'Vascular Doppler & Wound Culture overdue by 14 days' },
+        { name: 'Alok Bose', age: 51, gender: 'Male', blood: 'O+', risk: 'critical', score: 90, cond: 'Uncontrolled Type 2 Diabetes (HbA1c 10.4%) on Dual Oral Failure', overdue: 'Basal Insulin titration & Retinal screen overdue' },
+        { name: 'Jyoti Menon', age: 42, gender: 'Female', blood: 'AB+', risk: 'medium', score: 55, cond: 'Hashimoto Autoimmune Thyroiditis with Elevated Anti-TPO', overdue: 'Thyroid Ultrasound & Free T4 monitoring due' },
+        { name: 'David Johnson', age: 49, gender: 'Male', blood: 'B-', risk: 'critical', score: 86, cond: 'Pituitary Cushing Disease with Secondary Hypertension', overdue: '24-hour Urinary Free Cortisol & ACTH panel overdue' },
+        { name: 'Patricia Rodriguez', age: 36, gender: 'Female', blood: 'A-', risk: 'medium', score: 65, cond: 'Graves Disease Hyperthyroidism with Mild Orbitopathy', overdue: 'TRAb antibody titer & Liver Function Test due' },
+        { name: 'Daniel Hernandez', age: 57, gender: 'Male', blood: 'O-', risk: 'critical', score: 83, cond: 'Diabetic Gastroparesis & Autonomic Neuropathy', overdue: 'Gastric Emptying Scintigraphy overdue by 45 days' },
+        { name: 'Kimberly Lopez', age: 65, gender: 'Female', blood: 'AB-', risk: 'low', score: 40, cond: 'Secondary Hyperparathyroidism with Osteopenia', overdue: 'DEXA Bone Density Scan scheduled' },
+        { name: 'Anthony Clark', age: 45, gender: 'Male', blood: 'A+', risk: 'medium', score: 59, cond: 'MASH (Metabolic Dysfunction Steatohepatitis) & Pre-diabetes', overdue: 'FibroScan transient elastography pending' },
+        { name: 'George Hall', age: 54, gender: 'Male', blood: 'O+', risk: 'medium', score: 62, cond: 'Primary Adrenal Insufficiency (Addison) on Hydrocortisone', overdue: 'Electrolytes & Renin profile due' }
+      ]
+    },
+    'DOC1004': { // Dr. Ananya Iyer — Neurology
+      dept: 'Neurology & Stroke Center',
+      patients: [
+        { name: 'Suresh Rao', age: 63, gender: 'Male', blood: 'B+', risk: 'critical', score: 92, cond: 'Acute Ischemic Stroke (MCA Territory) Post-Thrombolysis', overdue: 'Repeat Brain MRI / MRA overdue by 30 days' },
+        { name: 'Kavita Nair', age: 34, gender: 'Female', blood: 'O+', risk: 'medium', score: 52, cond: 'Intractable Chronic Migraine with Visual Aura', overdue: 'CGRP Antagonist therapeutic evaluation due' },
+        { name: 'Harish Joshi', age: 68, gender: 'Male', blood: 'A+', risk: 'critical', score: 85, cond: 'Parkinson Disease (Hoehn & Yahr Stage 2) with Tremor', overdue: 'Levodopa titration & UPDRS Motor Assessment due' },
+        { name: 'Swati Chopra', age: 29, gender: 'Female', blood: 'AB+', risk: 'critical', score: 80, cond: 'Focal Epilepsy with Impaired Awareness on Dual AEDs', overdue: 'Video-EEG Monitoring overdue by 60 days' },
+        { name: 'Gaurav Bhat', age: 38, gender: 'Male', blood: 'B-', risk: 'critical', score: 88, cond: 'Relapsing-Remitting Multiple Sclerosis (RRMS) on DMT', overdue: 'Cervical Spine MRI with Gadolinium overdue' },
+        { name: 'Shilpa Menon', age: 58, gender: 'Female', blood: 'A-', risk: 'critical', score: 93, cond: 'Amyotrophic Lateral Sclerosis (Early Bulbar Presentation)', overdue: 'Pulmonary Function / FVC testing overdue' },
+        { name: 'Rahul Deshmukh', age: 47, gender: 'Male', blood: 'O-', risk: 'medium', score: 66, cond: 'Trigeminal Neuralgia (V2/V3) Refractory to Medications', overdue: 'Microvascular Decompression surgical consult pending' },
+        { name: 'Aarti Saxena', age: 50, gender: 'Female', blood: 'AB-', risk: 'low', score: 32, cond: 'Benign Paroxysmal Positional Vertigo (BPPV)', overdue: 'Dix-Hallpike verification & Epley maneuver complete' },
+        { name: 'Kiran Pillai', age: 62, gender: 'Male', blood: 'A+', risk: 'medium', score: 68, cond: 'Cervical Spondylotic Myelopathy with Paraesthesias', overdue: 'C-spine MRI & Neurosurgical evaluation scheduled' },
+        { name: 'Pallavi Bose', age: 43, gender: 'Female', blood: 'O+', risk: 'critical', score: 87, cond: 'Myasthenia Gravis (AChR Antibody Positive) with Ptosis', overdue: 'Single Fiber EMG & Pyridostigmine review due' }
+      ]
+    },
+    'DOC1005': { // Dr. Michael Scott — Medical Oncology
+      dept: 'Medical Oncology',
+      patients: [
+        { name: 'Vikas Kumar', age: 54, gender: 'Male', blood: 'B+', risk: 'critical', score: 94, cond: 'Colorectal Adenocarcinoma (Stage IIIb) Post-FOLFOX Cycle 4', overdue: 'CEA Tumor Marker & CT Abdomen/Pelvis overdue' },
+        { name: 'Rashmi Sharma', age: 49, gender: 'Female', blood: 'O+', risk: 'critical', score: 91, cond: 'Invasive Ductal Breast Carcinoma (ER/PR+, HER2-)', overdue: 'Post-chemotherapy Echocardiogram (LVEF) due' },
+        { name: 'Pradeep Mehta', age: 67, gender: 'Male', blood: 'A+', risk: 'critical', score: 96, cond: 'Non-Small Cell Lung Cancer (EGFR Exon 19) on Osimertinib', overdue: 'Chest CT & ctDNA Liquid Biopsy overdue by 45 days' },
+        { name: 'Renu Patel', age: 56, gender: 'Female', blood: 'AB+', risk: 'critical', score: 89, cond: 'Diffuse Large B-Cell Lymphoma (DLBCL) on R-CHOP Protocol', overdue: 'Interim PET-CT scan overdue by 14 days' },
+        { name: 'Ashok Singh', age: 72, gender: 'Male', blood: 'B-', risk: 'critical', score: 86, cond: 'Castration-Resistant Metastatic Prostate Ca on Enzalutamide', overdue: 'PSA Kinetics & Whole Body Bone Scan due' },
+        { name: 'Manju Iyer', age: 61, gender: 'Female', blood: 'A-', risk: 'critical', score: 88, cond: 'Epithelial Ovarian Carcinoma on Maintenance PARP Inhibitor', overdue: 'CA-125 level & Complete Blood Count due today' },
+        { name: 'Anita Reddy', age: 65, gender: 'Female', blood: 'O-', risk: 'critical', score: 85, cond: 'Advanced Renal Cell Carcinoma on Dual Immunotherapy', overdue: 'Thyroid & Adrenal Function screen overdue' },
+        { name: 'Usha Gupta', age: 59, gender: 'Female', blood: 'AB-', risk: 'critical', score: 90, cond: 'Gastric Adenocarcinoma with Peritoneal Washings Positive', overdue: 'Diagnostic Laparoscopy follow-up pending' },
+        { name: 'Mukesh Verma', age: 50, gender: 'Male', blood: 'A+', risk: 'critical', score: 95, cond: 'Glioblastoma Multiforme Post-Resection on Temozolomide', overdue: 'Brain MRI Perfusion protocol overdue by 21 days' },
+        { name: 'Radha Nair', age: 69, gender: 'Female', blood: 'O+', risk: 'critical', score: 87, cond: 'Multiple Myeloma (IgG Kappa) on VRd Induction Protocol', overdue: 'Serum Free Light Chains & Bone Marrow review due' }
+      ]
+    },
+    'DOC1006': { // Dr. Priya Nair — Nephrology
+      dept: 'Nephrology & Renal Care',
+      patients: [
+        { name: 'Sunita Singh', age: 50, gender: 'Female', blood: 'AB+', risk: 'critical', score: 79, cond: 'Chronic Kidney Disease Stage 3b with Hypertension', overdue: 'Spot Urine ACR & eGFR calculation overdue' },
+        { name: 'Vikram Iyer', age: 57, gender: 'Male', blood: 'AB-', risk: 'critical', score: 80, cond: 'End-Stage Renal Disease (ESRD) on Maintenance Hemodialysis', overdue: 'AV Fistula Doppler & Kt/V Dialysis Adequacy due' },
+        { name: 'Deepa Reddy', age: 45, gender: 'Female', blood: 'A+', risk: 'critical', score: 83, cond: 'Idiopathic Membranous Nephropathy with Nephrotic Range Proteinuria', overdue: 'Anti-PLA2R antibody titer & Serum Albumin due' },
+        { name: 'Amit Gupta', age: 53, gender: 'Male', blood: 'B+', risk: 'medium', score: 70, cond: 'Autosomal Dominant Polycystic Kidney Disease (ADPKD)', overdue: 'Total Kidney Volume (TKV) MRI scan scheduled' },
+        { name: 'Kavita Verma', age: 62, gender: 'Female', blood: 'O+', risk: 'critical', score: 92, cond: 'Diabetic Glomerulosclerosis with Rapid eGFR Decline', overdue: 'Nephrology multidisciplinary review overdue' },
+        { name: 'Ramesh Nair', age: 48, gender: 'Male', blood: 'A-', risk: 'medium', score: 58, cond: 'Recurrent Calcium Oxalate Nephrolithiasis with Obstruction', overdue: '24-hour Urine Metabolic Stone Profile due' },
+        { name: 'Pooja Joshi', age: 31, gender: 'Female', blood: 'B-', risk: 'critical', score: 89, cond: 'Lupus Nephritis (ISN/RPS Class IV) on MMF Therapy', overdue: 'Anti-dsDNA, C3/C4 Complement levels due today' },
+        { name: 'Manoj Chopra', age: 55, gender: 'Male', blood: 'O-', risk: 'critical', score: 86, cond: 'Post-Renal Transplant (Year 2) on Tacrolimus Regimen', overdue: 'Tacrolimus Trough Level (C0) overdue by 7 days' },
+        { name: 'Sneha Rao', age: 37, gender: 'Female', blood: 'AB-', risk: 'medium', score: 62, cond: 'IgA Nephropathy with Episodic Macroscopic Hematuria', overdue: 'Spot Protein-Creatinine Ratio & Serum Creatinine due' },
+        { name: 'Naveen Bose', age: 44, gender: 'Male', blood: 'A+', risk: 'low', score: 45, cond: 'Distal Renal Tubular Acidosis (Type 1) with Hypokalemia', overdue: 'Venous Blood Gas & Serum Potassium review scheduled' }
+      ]
+    },
+    'DOC1007': { // Dr. Vikram Seth — Pulmonology
+      dept: 'Pulmonology & Respiratory',
+      patients: [
+        { name: 'Divya Mishra', age: 61, gender: 'Female', blood: 'O+', risk: 'critical', score: 88, cond: 'COPD Gold Group D with Acute Exacerbation History', overdue: 'Spirometry with Pre/Post Bronchodilator overdue' },
+        { name: 'Sanjay Deshmukh', age: 42, gender: 'Male', blood: 'B+', risk: 'critical', score: 82, cond: 'Severe Eosinophilic Asthma on Biologic (Mepolizumab)', overdue: 'Absolute Eosinophil Count & FeNO testing due' },
+        { name: 'Geeta Saxena', age: 69, gender: 'Female', blood: 'A+', risk: 'critical', score: 93, cond: 'Idiopathic Pulmonary Fibrosis (IPF) on Nintedanib', overdue: 'High-Resolution CT (HRCT) Chest overdue by 60 days' },
+        { name: 'Alok Pillai', age: 56, gender: 'Male', blood: 'AB+', risk: 'medium', score: 64, cond: 'Severe Obstructive Sleep Apnea (AHI 42) on Auto-CPAP', overdue: 'CPAP Compliance & Epworth Sleepiness review due' },
+        { name: 'Swati Menon', age: 38, gender: 'Female', blood: 'B-', risk: 'medium', score: 60, cond: 'Pulmonary Sarcoidosis (Stage II) with Bilateral Hilar Adenopathy', overdue: 'Serum ACE Level & Eye Screening due' },
+        { name: 'Harish Bhat', age: 52, gender: 'Male', blood: 'A-', risk: 'medium', score: 67, cond: 'Post-COVID Fibrotic Lung Sequelae with Exertional Hypoxemia', overdue: '6-Minute Walk Test & DLCO scheduled' },
+        { name: 'Neha Kumar', age: 46, gender: 'Female', blood: 'O-', risk: 'critical', score: 84, cond: 'Bronchiectasis with Pseudomonas Aeruginosa Colonization', overdue: 'Sputum Microbiology & Chest Physiotherapy audit overdue' },
+        { name: 'Gaurav Sharma', age: 26, gender: 'Male', blood: 'AB-', risk: 'low', score: 30, cond: 'Primary Spontaneous Pneumothorax Post-Chest Tube', overdue: 'Pleural ultrasound complete; routine follow-up' },
+        { name: 'Shilpa Mehta', age: 49, gender: 'Female', blood: 'A+', risk: 'critical', score: 89, cond: 'Pulmonary Arterial Hypertension (WHO Group 1)', overdue: 'Echocardiogram RVSP & BNP monitoring overdue' },
+        { name: 'Rahul Patel', age: 60, gender: 'Male', blood: 'O+', risk: 'critical', score: 85, cond: 'Occupational Silicosis with Progressive Massive Fibrosis', overdue: 'Chest Radiograph (ILO Classification) due' }
+      ]
+    },
+    'DOC1008': { // Dr. Emily Watson — Gastroenterology
+      dept: 'Gastroenterology & Hepatology',
+      patients: [
+        { name: 'Aarti Singh', age: 48, gender: 'Female', blood: 'B+', risk: 'medium', score: 68, cond: 'NASH with F3 Bridging Fibrosis on Liver Biopsy', overdue: 'FibroScan & Liver Function Panel due' },
+        { name: 'Kiran Iyer', age: 58, gender: 'Male', blood: 'O+', risk: 'critical', score: 94, cond: 'Decompensated Liver Cirrhosis with Ascites & Portal HTN', overdue: 'Screening Upper GI Endoscopy for Varices overdue' },
+        { name: 'Pallavi Reddy', age: 32, gender: 'Female', blood: 'A+', risk: 'critical', score: 86, cond: 'Crohn Disease (Ileocolonic) on Infliximab Maintenance', overdue: 'Fecal Calprotectin & Infliximab Trough Level due' },
+        { name: 'Vikas Gupta', age: 40, gender: 'Male', blood: 'AB+', risk: 'critical', score: 83, cond: 'Ulcerative Colitis (Pancolitis) in Clinical Flare', overdue: 'Flexible Sigmoidoscopy & Stool pathogen screen overdue' },
+        { name: 'Rashmi Verma', age: 55, gender: 'Female', blood: 'B-', risk: 'medium', score: 65, cond: 'Chronic Calcific Pancreatitis with Exocrine Insufficiency', overdue: 'Fecal Elastase-1 & Fat-Soluble Vitamins due' },
+        { name: 'Pradeep Nair', age: 51, gender: 'Male', blood: 'A-', risk: 'low', score: 38, cond: 'Refractory GERD with Short-Segment Barrett Esophagus', overdue: 'Surveillance Esophagogastroduodenoscopy scheduled' },
+        { name: 'Jyoti Joshi', age: 44, gender: 'Female', blood: 'O-', risk: 'medium', score: 62, cond: 'Helicobacter Pylori Bleeding Duodenal Ulcer (Post-Healed)', overdue: 'Urea Breath Test for H. Pylori Eradication due' },
+        { name: 'Ajay Chopra', age: 29, gender: 'Male', blood: 'AB-', risk: 'medium', score: 54, cond: 'Celiac Disease with Severe Malabsorption (Marsh IIIb)', overdue: 'Tissue Transglutaminase (tTG-IgA) recheck due' },
+        { name: 'Renu Rao', age: 36, gender: 'Female', blood: 'A+', risk: 'low', score: 26, cond: 'Irritable Bowel Syndrome (IBS-Diarrhea Predominant)', overdue: 'Low FODMAP dietary adherence follow-up' },
+        { name: 'Ashok Bose', age: 52, gender: 'Male', blood: 'O+', risk: 'critical', score: 87, cond: 'Autoimmune Hepatitis (Type 1) on Azathioprine & Steroids', overdue: 'Total IgG & ALT/AST trend monitoring overdue' }
+      ]
+    },
+    'DOC1009': { // Dr. David Miller — Orthopedics
+      dept: 'Orthopedics & Joint Care',
+      patients: [
+        { name: 'Seema Mishra', age: 66, gender: 'Female', blood: 'B+', risk: 'medium', score: 69, cond: 'Bilateral Knee Osteoarthritis (KL Grade 4) Awaiting TKR', overdue: 'Pre-operative Cardiac & Anesthetic clearance due' },
+        { name: 'Santosh Deshmukh', age: 53, gender: 'Male', blood: 'O+', risk: 'critical', score: 81, cond: 'Lumbar Spondylolisthesis (L4-L5) with Radicular Sciatica', overdue: 'Lumbar Spine Dynamic MRI overdue by 30 days' },
+        { name: 'Manju Saxena', age: 27, gender: 'Female', blood: 'A+', risk: 'medium', score: 58, cond: 'Complete ACL Rupture with Medial Meniscal Tear', overdue: 'Post-arthroscopic Rehabilitation audit scheduled' },
+        { name: 'Kishore Pillai', age: 60, gender: 'Male', blood: 'AB+', risk: 'medium', score: 63, cond: 'Full-Thickness Rotator Cuff Tear (Supraspinatus Tendon)', overdue: 'Shoulder MRI Arthrogram & Orthopedic review due' },
+        { name: 'Anita Menon', age: 70, gender: 'Female', blood: 'B-', risk: 'critical', score: 88, cond: 'Severe Osteoporosis (T-score -3.4) with L2 Compression Fracture', overdue: 'DEXA Scan & Teriparatide injection initiation due' },
+        { name: 'Dinesh Bhat', age: 48, gender: 'Male', blood: 'A-', risk: 'medium', score: 60, cond: 'Cervical Disc Herniation (C5-C6) with Brachialgia', overdue: 'C-spine MRI & Electromyography (EMG) due' },
+        { name: 'Usha Kumar', age: 54, gender: 'Female', blood: 'O-', risk: 'low', score: 35, cond: 'Adhesive Capsulitis (Frozen Shoulder) in Thawing Phase', overdue: 'Physical therapy range of motion progression review' },
+        { name: 'Mukesh Sharma', age: 43, gender: 'Male', blood: 'AB-', risk: 'low', score: 29, cond: 'Chronic Plantar Fasciitis with Calcaneal Spur', overdue: 'Custom orthotic footbed fitting review' },
+        { name: 'Radha Mehta', age: 51, gender: 'Female', blood: 'A+', risk: 'medium', score: 56, cond: 'Carpal Tunnel Syndrome with Thenar Muscle Weakness', overdue: 'Nerve Conduction Velocity (NCV) study scheduled' },
+        { name: 'Vijay Patel', age: 68, gender: 'Male', blood: 'O+', risk: 'critical', score: 84, cond: 'Severe Hip Osteoarthritis with Joint Space Collapse', overdue: 'Pelvic Radiograph & Pre-op Total Hip evaluation due' }
+      ]
+    },
+    'DOC1010': { // Dr. Sunita Rao — Pediatrics
+      dept: 'Pediatrics & Adolescent Care',
+      patients: [
+        { name: 'Shashi Singh', age: 9, gender: 'Male', blood: 'B+', risk: 'critical', score: 85, cond: 'Pediatric Type 1 Diabetes on Multiple Daily Insulin Injections', overdue: 'Pediatric HbA1c & CGM sensor upload overdue' },
+        { name: 'Gopal Iyer', age: 6, gender: 'Male', blood: 'O+', risk: 'critical', score: 80, cond: 'Pediatric Brittle Asthma with Frequent Viral Wheezing', overdue: 'Inhaler Technique & Pediatric Pulmonology review due' },
+        { name: 'Lata Reddy', age: 2, gender: 'Female', blood: 'A+', risk: 'medium', score: 62, cond: 'Failure to Thrive & Gastroesophageal Reflux in Infancy', overdue: 'Growth Velocity Charting & Stool Elastase due' },
+        { name: 'John Gupta', age: 11, gender: 'Male', blood: 'AB+', risk: 'critical', score: 88, cond: 'Acute Rheumatic Fever with Mild Carditis & Chorea', overdue: 'Echocardiogram & ASO Titer follow-up due' },
+        { name: 'Mary Verma', age: 5, gender: 'Female', blood: 'B-', risk: 'critical', score: 89, cond: 'Nephrotic Syndrome (Minimal Change Disease) in Relapse', overdue: 'Urinary Protein-Creatinine Ratio & Serum Albumin due' },
+        { name: 'David Nair', age: 4, gender: 'Male', blood: 'A-', risk: 'medium', score: 64, cond: 'Kawasaki Disease (Convalescent) on Low-Dose Aspirin', overdue: 'Coronary Artery Echocardiogram screening due' },
+        { name: 'Sarah Joshi', age: 3, gender: 'Female', blood: 'O-', risk: 'low', score: 40, cond: 'Congenital Hypothyroidism on Weight-Adjusted Levothyroxine', overdue: 'Serum TSH & Free T4 dose-titration due' },
+        { name: 'James Chopra', age: 13, gender: 'Male', blood: 'AB-', risk: 'medium', score: 58, cond: 'Celiac Disease in Adolescence with Growth Deceleration', overdue: 'Anti-tTG IgA & Pediatric Dietitian consultation due' },
+        { name: 'Patricia Rao', age: 4, gender: 'Female', blood: 'A+', risk: 'low', score: 32, cond: 'Recurrent Complex Febrile Seizures with Normal Interictal EEG', overdue: 'Pediatric Neurology follow-up complete' },
+        { name: 'Robert Bose', age: 10, gender: 'Male', blood: 'O+', risk: 'low', score: 28, cond: 'ADHD with Growth & Blood Pressure Surveillance', overdue: 'Height/Weight percentile & Medication review scheduled' }
+      ]
+    }
+  };
 
   // ── 4. Generate 100 Patients & Associated Records ────────────────────────
   const patients = [];
@@ -266,182 +378,131 @@ function generateHospitalDatabase() {
   const notifications = [];
   const auditLogs = [];
 
+  let patientIndex = 1;
   let reportCounter = 1001;
   let apptCounter = 1001;
   let notifCounter = 1001;
   let auditCounter = 1001;
 
-  // Keep original 3 benchmark patients as PAT1001, PAT1002, PAT1003
-  const benchmarkPatients = [
-    {
-      id: 'PAT1001',
-      mrn: 'MRN-2024-0891',
-      name: 'Rajesh Kumar',
-      age: 58,
-      gender: 'Male',
-      bloodGroup: 'B+',
-      phone: '+91 98100 23456',
-      emergencyContact: 'Sunita Kumar (Wife): +91 98100 23457',
-      address: 'B-402, Green Glen Towers, Outer Ring Road, New Delhi',
-      chronicConditions: ['Type 2 Diabetes Mellitus', 'Essential Hypertension', 'Diabetic Nephropathy (Early)'],
-      allergies: ['Penicillin (Severe cutaneous reaction / rash)'],
-      riskLevel: 'critical',
-      riskScore: 88,
-      condition: 'Type 2 Diabetes + Severe Hypertension + Proteinuria',
-      appointmentTime: '10:30 AM (Slot 1)',
-      appointmentDate: '2026-09-02',
-      room: 'Room 102 (OPD Block A)',
-      attendingDoctor: 'Dr. Amit Sharma, MD (General Medicine)',
-      assignedDoctorId: 'DOC1001',
-      avatar: 'RK',
-      lastVisit: '2024-03-15',
-      overdueGap: 'eGFR & Urine ACR overdue by 168 days',
-      careJourney: [
-        { id: 'step-1', name: 'Consultation', status: 'completed', date: '2024-03-15', note: 'Encounter logged by Dr. Amit Sharma.' },
-        { id: 'step-2', name: 'Diagnosis', status: 'completed', date: '2024-03-15', note: 'T2DM (E11.69) & Stage 2 HTN (I10) confirmed.' },
-        { id: 'step-3', name: 'Treatment', status: 'completed', date: '2024-03-15', note: 'Metformin 1000mg + Glimepiride 2mg + Telmisartan 40mg.' },
-        { id: 'step-4', name: 'Investigation', status: 'attention', date: 'Overdue (168d)', note: 'Spot Urine ACR & eGFR calculation overdue.' },
-        { id: 'step-5', name: 'Follow-up', status: 'missed', date: '2024-06-15', note: 'Scheduled 3-month follow-up was missed by patient.' },
-        { id: 'step-6', name: 'Review', status: 'pending', date: 'Today', note: 'Comprehensive multi-parameter review required.' }
-      ]
-    },
-    {
-      id: 'PAT1002',
-      mrn: 'MRN-2024-0943',
-      name: 'Priya Sharma',
-      age: 44,
-      gender: 'Female',
-      bloodGroup: 'O+',
-      phone: '+91 98200 87654',
-      emergencyContact: 'Rohan Sharma (Spouse): +91 98200 87655',
-      address: 'A-12, Palm Meadows, Whitefield, Bengaluru',
-      chronicConditions: ['Primary Hypothyroidism', 'Iron Deficiency Anemia'],
-      allergies: ['Sulfa Drugs (Stevens-Johnson syndrome risk)'],
-      riskLevel: 'medium',
-      riskScore: 62,
-      condition: 'Hypothyroidism + Refractory Fatigue + Anemia',
-      appointmentTime: '11:15 AM (Slot 2)',
-      appointmentDate: '2026-09-02',
-      room: 'Room 204 (Cardiac Wing)',
-      attendingDoctor: 'Dr. Sarah Chen, MD (Cardiology)',
-      assignedDoctorId: 'DOC1002',
-      avatar: 'PS',
-      lastVisit: '2024-01-20',
-      overdueGap: 'Repeat Free T3/T4 & Ferritin panel due',
-      careJourney: [
-        { id: 'step-1', name: 'Consultation', status: 'completed', date: '2024-01-20', note: 'Routine endocrine follow-up for chronic fatigue.' },
-        { id: 'step-2', name: 'Diagnosis', status: 'completed', date: '2024-01-20', note: 'Primary Hypothyroidism (E03.9).' },
-        { id: 'step-3', name: 'Treatment', status: 'completed', date: '2024-01-20', note: 'Levothyroxine titrated from 75mcg to 88mcg.' },
-        { id: 'step-4', name: 'Investigation', status: 'attention', date: 'Due Today', note: 'Repeat Serum TSH, Free T4, and Ferritin panel needed.' },
-        { id: 'step-5', name: 'Follow-up', status: 'completed', date: '2024-01-20', note: 'Follow-up appointment attended.' },
-        { id: 'step-6', name: 'Review', status: 'pending', date: 'Today', note: 'Evaluate symptom resolution and medication compliance.' }
-      ]
-    },
-    {
-      id: 'PAT1003',
-      mrn: 'MRN-2024-1102',
-      name: 'Arjun Mehta',
-      age: 62,
-      gender: 'Male',
-      bloodGroup: 'A+',
-      phone: '+91 98300 11223',
-      emergencyContact: 'Kavita Mehta (Daughter): +91 98300 11224',
-      address: 'Flat 301, Silver Arch, Marine Drive, Mumbai',
-      chronicConditions: ['Post-CABG (2022)', 'Coronary Artery Disease', 'Dyslipidemia'],
-      allergies: ['Aspirin / NSAIDs (Severe gastritis / ulceration)'],
-      riskLevel: 'critical',
-      riskScore: 92,
-      condition: 'CAD + Post-CABG + Exertional Angina & Dyspnea',
-      appointmentTime: '12:00 PM (Slot 3)',
-      appointmentDate: '2026-09-02',
-      room: 'Room 204 (Cardiac Wing)',
-      attendingDoctor: 'Dr. Sarah Chen, MD (Cardiology)',
-      assignedDoctorId: 'DOC1002',
-      avatar: 'AM',
-      lastVisit: '2024-02-10',
-      overdueGap: '2D Echocardiogram (LVEF assessment) overdue by 120 days',
-      careJourney: [
-        { id: 'step-1', name: 'Consultation', status: 'completed', date: '2024-02-10', note: 'Cardiology checkup following mild exertional chest pressure.' },
-        { id: 'step-2', name: 'Diagnosis', status: 'completed', date: '2024-02-10', note: 'Ischemic Heart Disease with preserved ejection fraction.' },
-        { id: 'step-3', name: 'Treatment', status: 'completed', date: '2024-02-10', note: 'Atorvastatin 40mg + Clopidogrel 75mg + Metoprolol 50mg.' },
-        { id: 'step-4', name: 'Investigation', status: 'attention', date: 'Overdue (120d)', note: 'Follow-up 2D Echo & Stress Myocardial Perfusion overdue.' },
-        { id: 'step-5', name: 'Follow-up', status: 'completed', date: '2024-02-10', note: 'Previous appointment completed.' },
-        { id: 'step-6', name: 'Review', status: 'pending', date: 'Today', note: 'Urgent evaluation for ischemia recurrence.' }
-      ]
-    }
-  ];
+  // Build each doctor's dedicated cohort
+  doctors.forEach((doc, docIdx) => {
+    const cohort = doctorCohorts[doc.doctorId];
+    if (!cohort) return;
 
-  // Add benchmark patients to full list
-  benchmarkPatients.forEach(p => patients.push(p));
+    cohort.patients.forEach((cp, pIdx) => {
+      const patientId = `PAT${1000 + patientIndex}`;
+      const mrn = `MRN-2024-${String(1000 + patientIndex).padStart(4, '0')}`;
+      patientIndex++;
 
-  // Generate 97 more realistic patients to reach exactly 100
-  for (let i = 4; i <= 100; i++) {
-    const patientId = `PAT${1000 + i}`;
-    const mrn = `MRN-2024-${String(1000 + i).padStart(4, '0')}`;
-    const fn = firstNames[(i - 1) % firstNames.length];
-    const ln = lastNames[(i - 1 + Math.floor(i / 3)) % lastNames.length];
-    const name = `${fn} ${ln}`;
-    const age = 22 + ((i * 7) % 63);
-    const gender = i % 2 === 0 ? 'Male' : 'Female';
-    const bloodGroup = bloodGroups[i % bloodGroups.length];
-    const city = cities[i % cities.length];
-    const condObj = conditionsPool[(i - 1) % conditionsPool.length];
-    const allergies = allergiesPool[i % allergiesPool.length];
-    
-    // Determine risk: 25 Critical, 45 Medium, 30 Low
-    let riskLevel = 'low';
-    let riskScore = 20 + ((i * 3) % 40);
-    if (i <= 25 || condObj.risk === 'critical') {
-      riskLevel = 'critical';
-      riskScore = 75 + (i % 22);
-    } else if (i <= 70 || condObj.risk === 'medium') {
-      riskLevel = 'medium';
-      riskScore = 50 + (i % 25);
-    }
+      const avatar = cp.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+      const city = cities[(patientIndex * 3) % cities.length];
+      const allergies = allergiesPool[(patientIndex * 2) % allergiesPool.length];
 
-    const assignedDoctor = doctors.find(d => d.doctorId === condObj.dr) || doctors[i % doctors.length];
-    const appointmentTime = `${8 + (i % 8)}:${(i % 4) * 15 === 0 ? '00' : (i % 4) * 15} ${i % 8 >= 4 ? 'PM' : 'AM'}`;
+      const careJourney = [
+        { id: 'step-1', name: 'Consultation', status: 'completed', date: '2024-03-15', note: `Encounter logged by ${doc.name}.` },
+        { id: 'step-2', name: 'Diagnosis', status: 'completed', date: '2024-03-15', note: `${cp.cond}.` },
+        { id: 'step-3', name: 'Treatment', status: 'completed', date: '2024-03-15', note: 'Medication regimen initiated according to clinical protocol.' },
+        { id: 'step-4', name: 'Investigation', status: cp.risk === 'critical' ? 'attention' : (pIdx % 3 === 0 ? 'pending' : 'completed'), date: cp.risk === 'critical' ? 'Overdue' : 'Scheduled', note: cp.overdue },
+        { id: 'step-5', name: 'Follow-up', status: cp.risk === 'critical' ? (pIdx % 2 === 0 ? 'missed' : 'attention') : 'pending', date: '2026-09-10', note: `Scheduled follow-up with ${doc.name}.` },
+        { id: 'step-6', name: 'Review', status: 'pending', date: 'Today', note: 'Attending specialist review.' }
+      ];
 
-    const careJourney = [
-      { id: 'step-1', name: 'Consultation', status: 'completed', date: '2024-04-10', note: `Encounter logged by ${assignedDoctor.name}.` },
-      { id: 'step-2', name: 'Diagnosis', status: 'completed', date: '2024-04-10', note: `${condObj.name} (${condObj.icd}).` },
-      { id: 'step-3', name: 'Treatment', status: 'completed', date: '2024-04-10', note: 'Clinical medication regimen initiated.' },
-      { id: 'step-4', name: 'Investigation', status: riskLevel === 'critical' ? 'attention' : (i % 3 === 0 ? 'pending' : 'completed'), date: riskLevel === 'critical' ? 'Urgent Review' : 'Scheduled', note: 'Diagnostic evaluation in progress.' },
-      { id: 'step-5', name: 'Follow-up', status: riskLevel === 'critical' ? (i % 2 === 0 ? 'missed' : 'attention') : 'pending', date: '2026-09-10', note: 'Scheduled outpatient review.' },
-      { id: 'step-6', name: 'Review', status: 'pending', date: 'Today', note: 'Attending physician evaluation.' }
-    ];
+      const patientRecord = {
+        id: patientId,
+        mrn,
+        name: cp.name,
+        age: cp.age,
+        gender: cp.gender,
+        bloodGroup: cp.blood,
+        phone: `+91 ${98000 + patientIndex} ${10000 + patientIndex * 13}`,
+        emergencyContact: `Emergency: +91 ${98000 + patientIndex} ${50000 + patientIndex * 17}`,
+        address: `Apt ${101 + patientIndex}, Sector ${1 + (patientIndex % 20)}, ${city}`,
+        chronicConditions: [cp.cond],
+        allergies,
+        riskLevel: cp.risk,
+        riskScore: cp.score,
+        condition: cp.cond,
+        appointmentTime: `${8 + (pIdx % 6)}:${(pIdx % 4) * 15 === 0 ? '00' : (pIdx % 4) * 15} ${pIdx >= 4 ? 'PM' : 'AM'} (Slot ${pIdx + 1})`,
+        appointmentDate: '2026-09-02',
+        room: doc.room,
+        attendingDoctor: `${doc.name} (${doc.department})`,
+        assignedDoctorId: doc.doctorId,
+        avatar,
+        lastVisit: `2024-0${1 + (pIdx % 4)}-${10 + (pIdx % 15)}`,
+        overdueGap: cp.overdue,
+        careJourney
+      };
 
-    const pData = {
-      id: patientId,
-      mrn,
-      name,
-      age,
-      gender,
-      bloodGroup,
-      phone: `+91 ${98000 + i} ${10000 + i * 17}`,
-      emergencyContact: `Family Contact: +91 ${98000 + i} ${50000 + i * 19}`,
-      address: `Flat ${101 + i}, Sector ${1 + (i % 25)}, ${city}`,
-      chronicConditions: [condObj.name],
-      allergies,
-      riskLevel,
-      riskScore,
-      condition: condObj.name,
-      appointmentTime,
-      appointmentDate: i % 3 === 0 ? '2026-09-02' : i % 3 === 1 ? '2026-09-03' : '2026-09-04',
-      room: assignedDoctor.room,
-      attendingDoctor: `${assignedDoctor.name} (${assignedDoctor.department})`,
-      assignedDoctorId: assignedDoctor.doctorId,
-      avatar: `${fn[0]}${ln[0]}`,
-      lastVisit: `2024-0${1 + (i % 5)}-${10 + (i % 18)}`,
-      overdueGap: riskLevel === 'critical' ? `Care Gap: Diagnostic protocol & follow-up overdue` : 'Routine monitoring',
-      careJourney
-    };
+      patients.push(patientRecord);
 
-    patients.push(pData);
-  }
+      // Add Appointment for this patient
+      appointments.push({
+        appointmentId: `APT${apptCounter++}`,
+        patientId: patientRecord.id,
+        patientName: patientRecord.name,
+        mrn: patientRecord.mrn,
+        doctorId: doc.doctorId,
+        doctorName: doc.name,
+        department: doc.department,
+        appointmentDate: '2026-09-02',
+        appointmentTime: patientRecord.appointmentTime,
+        status: pIdx < 3 ? 'in-progress' : pIdx < 7 ? 'scheduled' : 'completed',
+        reason: patientRecord.condition,
+        room: doc.room
+      });
+
+      // Add Medical Report
+      medicalReports.push({
+        reportId: `REP${reportCounter++}`,
+        patientId: patientRecord.id,
+        patientName: patientRecord.name,
+        mrn: patientRecord.mrn,
+        reportType: doc.doctorId === 'DOC1002' ? '12-Lead ECG & 2D Echo' : doc.doctorId === 'DOC1003' ? 'Continuous Glucose & HbA1c Panel' : doc.doctorId === 'DOC1007' ? 'Chest Radiograph & Spirometry' : 'Comprehensive Clinical Lab Panel',
+        uploadedFile: `${patientRecord.name.replace(/\s+/g, '_')}_Clinical_Extract_2024.pdf`,
+        OCRText: `Extracted diagnostic findings for ${patientRecord.name} (${patientRecord.mrn}). Condition: ${patientRecord.condition}. Evaluated under ${doc.department} clinical practice standards.`,
+        uploadedDate: '2024-03-15',
+        verifiedBy: doc.name
+      });
+
+      // Add Pending Investigation if applicable
+      if (cp.risk === 'critical' || pIdx % 2 === 0) {
+        investigations.push({
+          investigationId: `INV${1000 + investigations.length + 1}`,
+          patientId: patientRecord.id,
+          patientName: patientRecord.name,
+          mrn: patientRecord.mrn,
+          investigationName: cp.overdue.replace(/overdue|due|by|\d+ days|scheduled/gi, '').trim() || `${doc.department} Diagnostic Panel`,
+          status: cp.risk === 'critical' ? 'attention' : 'pending',
+          urgency: cp.risk === 'critical' ? 'critical' : 'medium',
+          dueDate: cp.risk === 'critical' ? 'Overdue (Audit Required)' : 'Due in 7 Days',
+          reason: `Evaluate disease progression for ${cp.cond}`,
+          guidelineRef: `${doc.department} Practice Guidelines 2024`,
+          basedOnCondition: cp.cond,
+          orderedBy: doc.name
+        });
+      }
+
+      // Add Follow-up
+      if (cp.risk === 'critical' || pIdx % 2 === 1) {
+        followUps.push({
+          followUpId: `FOL${1000 + followUps.length + 1}`,
+          patientId: patientRecord.id,
+          patientName: patientRecord.name,
+          mrn: patientRecord.mrn,
+          followUpDate: cp.risk === 'critical' ? '2024-06-15 (Overdue)' : '2026-09-15',
+          status: cp.risk === 'critical' ? 'overdue' : 'scheduled',
+          assignedDoctor: doc.name,
+          assignedDoctorId: doc.doctorId,
+          reason: `Outpatient specialty follow-up for ${cp.cond}`,
+          contactStatus: cp.risk === 'critical' ? 'Pending Tele-Recall' : 'Confirmed'
+        });
+      }
+    });
+  });
 
   // ── 5. Generate 250 Appointments ─────────────────────────────────────────
   for (let a = 1; a <= 250; a++) {
+
     const p = patients[(a - 1) % patients.length];
     const d = doctors.find(doc => doc.doctorId === p.assignedDoctorId) || doctors[a % doctors.length];
     const apptId = `APT${apptCounter++}`;
