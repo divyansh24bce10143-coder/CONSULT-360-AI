@@ -5,9 +5,20 @@
    ========================================================================== */
 
 // ── Application State ───────────────────────────────────────────────────────
+// ── Application State ───────────────────────────────────────────────────────
 const state = {
   serverOnline: false,
   authenticated: false,
+  doctor: {
+    doctorId: 'DOC1001',
+    name: 'Dr. Amit Sharma',
+    department: 'General Medicine',
+    avatar: 'AS'
+  },
+  patients: typeof DEMO_PATIENTS !== 'undefined' ? [...DEMO_PATIENTS] : [],
+  results: typeof DEMO_RESULTS !== 'undefined' ? { ...DEMO_RESULTS } : {},
+  notifications: [],
+  dashboardStats: null,
   currentPatientId: null,
   currentResult: null,
   currentView: 'dashboard',      // 'dashboard' | 'patient'
@@ -24,11 +35,10 @@ if (typeof pdfjsLib !== 'undefined') {
 }
 
 // ── Initialization ─────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   initAuthGateway();
-  renderSidebarQueue();
-  renderDashboardWorklist();
-  checkServerHealth();
+  await checkServerHealth();
+  await loadHospitalData();
   setupUploadArea();
 });
 
@@ -37,11 +47,19 @@ function initAuthGateway() {
   const isAuth = sessionStorage.getItem('consult360_auth') === 'true' || 
                  localStorage.getItem('consult360_auth') === 'true';
 
+  const storedDoc = sessionStorage.getItem('consult360_doctor') || localStorage.getItem('consult360_doctor');
+  if (storedDoc) {
+    try {
+      state.doctor = JSON.parse(storedDoc);
+    } catch (e) {}
+  }
+
   const authScreen = document.getElementById('auth-screen');
   const appWorkspace = document.getElementById('app-workspace');
 
   if (isAuth) {
     state.authenticated = true;
+    updateClinicianGreeting();
     if (authScreen) authScreen.classList.add('hidden');
     if (appWorkspace) appWorkspace.classList.remove('hidden');
   } else {
@@ -49,6 +67,41 @@ function initAuthGateway() {
     if (authScreen) authScreen.classList.remove('hidden');
     if (appWorkspace) appWorkspace.classList.add('hidden');
   }
+}
+
+function selectDemoDoctor(id, name, dept) {
+  const idInput = document.getElementById('auth-doctor-id');
+  const pwdInput = document.getElementById('auth-password');
+  const deptPill = document.getElementById('auth-dept-indicator');
+  
+  if (idInput) idInput.value = id;
+  if (pwdInput) pwdInput.value = 'consult360';
+  if (deptPill) deptPill.textContent = `${dept} / OPD`;
+
+  document.querySelectorAll('.demo-account-chip').forEach(chip => {
+    chip.classList.toggle('active', chip.querySelector('.chip-id')?.textContent === id);
+  });
+
+  showToast(`Selected Demo: ${name} (${id})`);
+}
+
+function getSalutation() {
+  const hour = new Date().getHours();
+  if (hour >= 4 && hour < 12) return 'Good Morning,';
+  if (hour >= 12 && hour < 17) return 'Good Afternoon,';
+  return 'Good Evening,';
+}
+
+function updateClinicianGreeting() {
+  const salutationEl = document.getElementById('clinician-salutation');
+  const nameEl = document.getElementById('clinician-full-name');
+  const deptEl = document.getElementById('clinician-dept');
+  const avatarEl = document.getElementById('clinician-avatar');
+
+  if (salutationEl) salutationEl.textContent = getSalutation();
+  if (nameEl) nameEl.textContent = state.doctor.name || 'Dr. Amit Sharma';
+  if (deptEl) deptEl.innerHTML = `${state.doctor.department || 'General Medicine'} · <span style="color:var(--deep-teal);font-weight:700">Sign Out</span>`;
+  if (avatarEl) avatarEl.textContent = state.doctor.avatar || (state.doctor.name ? state.doctor.name.replace(/Dr\.\s*/i, '').substring(0, 2).toUpperCase() : 'AS');
 }
 
 async function handleAuthSubmit(event) {
@@ -70,42 +123,71 @@ async function handleAuthSubmit(event) {
   const step2 = document.getElementById('auth-step-2');
   const step3 = document.getElementById('auth-step-3');
 
+  // Verify against /api/login endpoint
+  let loginResult = null;
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ doctorId, password })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(`⚠️ ${data.error || 'Login failed.'}`, 'error');
+      return;
+    }
+    loginResult = data;
+  } catch (err) {
+    // Local fallback for offline mode
+    loginResult = {
+      token: 'demo-token',
+      doctor: {
+        doctorId: doctorId.toUpperCase(),
+        name: doctorId.toUpperCase() === 'DOC1002' ? 'Dr. Sarah Chen, MD' : doctorId.toUpperCase() === 'DOC1003' ? 'Dr. Rajesh Verma' : 'Dr. Amit Sharma',
+        department: doctorId.toUpperCase() === 'DOC1002' ? 'Cardiology' : doctorId.toUpperCase() === 'DOC1003' ? 'Endocrinology' : 'General Medicine',
+        avatar: doctorId.toUpperCase() === 'DOC1002' ? 'SC' : doctorId.toUpperCase() === 'DOC1003' ? 'RV' : 'AS'
+      }
+    };
+  }
+
   // Transition to Loading Sequence
   if (authForm) authForm.classList.add('hidden');
   if (loadingState) loadingState.classList.remove('hidden');
 
   // Sequence Step 1: Verifying Credentials (0ms)
   if (step1) step1.className = 'auth-check-item active';
-  if (stepText) stepText.textContent = 'Verifying credentials with Medical Directory...';
+  if (stepText) stepText.textContent = `Verifying credentials for ${doctorId.toUpperCase()} with Medical Directory...`;
   if (progressBar) progressBar.style.width = '33%';
 
-  await new Promise(r => setTimeout(r, 650));
+  await new Promise(r => setTimeout(r, 600));
 
-  // Sequence Step 2: Loading Today's Patients (650ms)
+  // Sequence Step 2: Loading Today's Patients (600ms)
   if (step1) step1.className = 'auth-check-item done';
   if (step2) step2.className = 'auth-check-item active';
-  if (stepText) stepText.textContent = 'Loading today\'s outpatient triage queue...';
+  if (stepText) stepText.textContent = 'Loading today\'s hospital outpatient triage queue...';
   if (progressBar) progressBar.style.width = '66%';
 
-  await new Promise(r => setTimeout(r, 650));
+  await new Promise(r => setTimeout(r, 600));
 
-  // Sequence Step 3: Fetching AI Insights (1300ms)
+  // Sequence Step 3: Fetching AI Insights (1200ms)
   if (step2) step2.className = 'auth-check-item done';
   if (step3) step3.className = 'auth-check-item active';
-  if (stepText) stepText.textContent = 'Fetching clinical AI decision support models...';
+  if (stepText) stepText.textContent = 'Fetching clinical AI decision support models (Gemini 3.6 Flash)...';
   if (progressBar) progressBar.style.width = '100%';
 
   await new Promise(r => setTimeout(r, 600));
   if (step3) step3.className = 'auth-check-item done';
 
-  // Complete Authentication
+  // Complete Authentication State
   state.authenticated = true;
-  if (remember) {
-    localStorage.setItem('consult360_auth', 'true');
-  }
-  sessionStorage.setItem('consult360_auth', 'true');
+  state.doctor = loginResult.doctor;
 
-  await new Promise(r => setTimeout(r, 300));
+  const storage = remember ? localStorage : sessionStorage;
+  storage.setItem('consult360_auth', 'true');
+  storage.setItem('consult360_token', loginResult.token || '');
+  storage.setItem('consult360_doctor', JSON.stringify(loginResult.doctor));
+
+  await new Promise(r => setTimeout(r, 250));
 
   // Smooth Reveal of Application Workspace
   const authScreen = document.getElementById('auth-screen');
@@ -113,17 +195,13 @@ async function handleAuthSubmit(event) {
   if (authScreen) authScreen.classList.add('hidden');
   if (appWorkspace) appWorkspace.classList.remove('hidden');
 
-  renderSidebarQueue();
-  renderDashboardWorklist();
-  showToast('✓ Welcome, Dr. Sarah Chen, MD · Ambulatory Cardiology');
+  updateClinicianGreeting();
+  await loadHospitalData();
+  showToast(`✓ ${getSalutation()} ${state.doctor.name} (${state.doctor.department})`);
 }
 
 function fillDemoCredentials(id, name) {
-  const idInput = document.getElementById('auth-doctor-id');
-  const pwdInput = document.getElementById('auth-password');
-  if (idInput) idInput.value = id;
-  if (pwdInput) pwdInput.value = 'medicalpassword2026';
-  showToast(`Autofilled credentials for ${name}`);
+  selectDemoDoctor(id, name, id === 'DOC1002' ? 'Cardiology' : id === 'DOC1003' ? 'Endocrinology' : 'General Medicine');
 }
 
 function togglePasswordVisibility() {
@@ -143,7 +221,11 @@ function handleSignOut() {
 
   state.authenticated = false;
   sessionStorage.removeItem('consult360_auth');
+  sessionStorage.removeItem('consult360_token');
+  sessionStorage.removeItem('consult360_doctor');
   localStorage.removeItem('consult360_auth');
+  localStorage.removeItem('consult360_token');
+  localStorage.removeItem('consult360_doctor');
 
   const authScreen = document.getElementById('auth-screen');
   const appWorkspace = document.getElementById('app-workspace');
@@ -157,6 +239,111 @@ function handleSignOut() {
 
   showToast('Signed out of clinical session');
 }
+
+// ── Hospital Information System Data Fetching ──────────────────────────────
+async function loadHospitalData() {
+  try {
+    // 1. Fetch Patients from /api/patients
+    const pRes = await fetch('/api/patients?limit=100');
+    if (pRes.ok) {
+      const pData = await pRes.json();
+      if (pData.patients && pData.patients.length > 0) {
+        state.patients = pData.patients;
+      }
+    }
+
+    // 2. Fetch Dashboard KPIs from /api/dashboard
+    const dRes = await fetch('/api/dashboard');
+    if (dRes.ok) {
+      const dData = await dRes.json();
+      state.dashboardStats = dData;
+    }
+
+    // 3. Fetch Doctor Notifications from /api/notifications
+    const token = sessionStorage.getItem('consult360_token') || localStorage.getItem('consult360_token');
+    const nRes = await fetch('/api/notifications', {
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+    });
+    if (nRes.ok) {
+      const nData = await nRes.json();
+      state.notifications = nData.notifications || [];
+      updateNotifBadge(nData.unreadCount || 0);
+    }
+  } catch (err) {
+    console.warn('[HIS Data Sync] Local fallback:', err.message);
+  }
+
+  renderSidebarQueue();
+  renderDashboardWorklist();
+}
+
+function updateNotifBadge(unreadCount) {
+  const badge = document.getElementById('header-notif-count');
+  if (badge) {
+    badge.textContent = unreadCount;
+    badge.style.display = unreadCount > 0 ? 'inline-block' : 'none';
+  }
+}
+
+// ── Notification Modal Management ──────────────────────────────────────────
+function openNotificationsModal() {
+  renderNotificationsList();
+  document.getElementById('notifications-modal')?.classList.remove('hidden');
+}
+
+function closeNotificationsModal() {
+  document.getElementById('notifications-modal')?.classList.add('hidden');
+}
+
+function handleNotifBackdropClick(event) {
+  if (event.target.id === 'notifications-modal') {
+    closeNotificationsModal();
+  }
+}
+
+function renderNotificationsList() {
+  const container = document.getElementById('notif-list-container');
+  if (!container) return;
+
+  if (!state.notifications || state.notifications.length === 0) {
+    container.innerHTML = `<div style="text-align:center;padding:32px;color:var(--text-muted)">No active hospital notifications.</div>`;
+    return;
+  }
+
+  container.innerHTML = state.notifications.map(n => `
+    <div class="notif-card-item ${!n.isRead ? 'unread' : ''} notif-${n.priority || 'medium'}" onclick="markNotificationRead('${n.notificationId}')">
+      <div class="notif-icon-col">
+        ${n.type === 'critical_patient' ? '🚨' : n.type === 'investigation_pending' ? '🔬' : n.type === 'followup_overdue' ? '⏰' : '📋'}
+      </div>
+      <div class="notif-content-col">
+        <div class="notif-header-row">
+          <span class="notif-card-title">${n.title}</span>
+          <span class="notif-time-text">${n.createdAt ? new Date(n.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Just Now'}</span>
+        </div>
+        <p class="notif-card-message">${n.message}</p>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function markNotificationRead(id) {
+  try {
+    await fetch(`/api/notifications/${id}/read`, { method: 'POST' });
+    const notif = state.notifications.find(n => n.notificationId === id);
+    if (notif) notif.isRead = true;
+    const unread = state.notifications.filter(n => !n.isRead).length;
+    updateNotifBadge(unread);
+    renderNotificationsList();
+  } catch (e) {}
+}
+
+async function markAllNotificationsRead() {
+  state.notifications.forEach(n => n.isRead = true);
+  updateNotifBadge(0);
+  renderNotificationsList();
+  showToast('All notifications marked as read.');
+}
+
 
 
 // ── Server Health Check ───────────────────────────────────────────────────
@@ -210,17 +397,25 @@ function renderDashboardWorklist() {
   const tbody = document.getElementById('worklist-tbody');
   if (!tbody) return;
 
-  // Calculate KPI Counts
+  const patientsList = state.patients || [];
+
+  // Calculate KPI Counts from live stats or list
   let criticalCount = 0;
   let overdueCount = 0;
   let pendingCount = 0;
 
-  DEMO_PATIENTS.forEach(p => {
-    if (p.riskLevel === 'critical') criticalCount++;
-    if (p.careJourney?.some(j => j.status === 'missed' || j.status === 'attention')) overdueCount++;
-    const res = DEMO_RESULTS[p.id];
-    if (res?.missingInvestigations) pendingCount += res.missingInvestigations.length;
-  });
+  if (state.dashboardStats?.kpi) {
+    criticalCount = state.dashboardStats.kpi.criticalAttentionRequired;
+    overdueCount  = state.dashboardStats.kpi.overdueFollowUps;
+    pendingCount  = state.dashboardStats.kpi.pendingInvestigations;
+  } else {
+    patientsList.forEach(p => {
+      if (p.riskLevel === 'critical') criticalCount++;
+      if (p.careJourney?.some(j => j.status === 'missed' || j.status === 'attention')) overdueCount++;
+      const res = state.results[p.id];
+      if (res?.missingInvestigations) pendingCount += res.missingInvestigations.length;
+    });
+  }
 
   const kpiCritEl = document.getElementById('kpi-critical-count');
   const kpiOverEl = document.getElementById('kpi-overdue-count');
@@ -230,19 +425,19 @@ function renderDashboardWorklist() {
   if (kpiCritEl) kpiCritEl.textContent = criticalCount;
   if (kpiOverEl) kpiOverEl.textContent = overdueCount;
   if (kpiPendEl) kpiPendEl.textContent = pendingCount;
-  if (kpiTotEl)  kpiTotEl.textContent  = DEMO_PATIENTS.length;
+  if (kpiTotEl)  kpiTotEl.textContent  = patientsList.length;
 
   const quickStats = document.getElementById('triage-quick-stats');
   if (quickStats) {
-    quickStats.innerHTML = `<strong>${DEMO_PATIENTS.length} Outpatients</strong> in Queue · <strong>${criticalCount} Critical</strong> · <strong>${pendingCount} Pending Labs</strong>`;
+    quickStats.innerHTML = `<strong>${patientsList.length} Outpatients</strong> in Queue · <strong>${criticalCount} Critical</strong> · <strong>${pendingCount} Pending Labs</strong>`;
   }
 
   // Filter patients for the dashboard table
-  const filtered = DEMO_PATIENTS.filter(p => {
+  const filtered = patientsList.filter(p => {
     if (state.dashboardFilter === 'critical') return p.riskLevel === 'critical';
     if (state.dashboardFilter === 'overdue') return p.careJourney?.some(j => j.status === 'missed' || j.status === 'attention');
     if (state.dashboardFilter === 'pending-tests') {
-      const res = DEMO_RESULTS[p.id];
+      const res = state.results[p.id];
       return res?.missingInvestigations && res.missingInvestigations.length > 0;
     }
     return true;
@@ -265,20 +460,20 @@ function renderDashboardWorklist() {
       <tr>
         <td>
           <div class="table-patient-cell">
-            <div class="table-avatar-badge">${p.avatar}</div>
+            <div class="table-avatar-badge">${p.avatar || p.name.substring(0, 2).toUpperCase()}</div>
             <div>
               <div class="table-patient-name">${p.name}</div>
-              <div class="table-patient-sub">${p.mrn} · ${p.age}y/${p.gender[0]} · ${p.bloodGroup}</div>
+              <div class="table-patient-sub">${p.mrn || p.id} · ${p.age}y/${(p.gender || 'U')[0]} · ${p.bloodGroup || '—'}</div>
             </div>
           </div>
         </td>
         <td>
-          <span class="triage-badge risk-${p.riskLevel}">
+          <span class="triage-badge risk-${p.riskLevel || 'medium'}">
             ${p.riskLevel === 'critical' ? '🔴 Critical' : p.riskLevel === 'medium' ? '🟠 High Attention' : '🟢 Routine'}
           </span>
         </td>
         <td>
-          <div class="table-condition-text">${p.condition}</div>
+          <div class="table-condition-text">${p.condition || 'General Outpatient Care'}</div>
         </td>
         <td>
           <span class="triage-badge stage-${currentStage.status}">
@@ -287,12 +482,12 @@ function renderDashboardWorklist() {
         </td>
         <td>
           <div class="table-gap-alert">
-            <span>⚠️</span> ${p.overdueGap || 'Routine Follow-up'}
+            <span>⚠️</span> ${p.overdueGap || 'Routine Monitoring'}
           </div>
         </td>
         <td>
           <div style="font-family:var(--font-mono);font-size:11.5px;color:var(--text-secondary)">${p.lastVisit || 'Today'}</div>
-          <div style="font-size:10.5px;color:var(--text-muted)">${p.attendingDoctor ? p.attendingDoctor.split(',')[0] : 'Dr. Sarah Chen'}</div>
+          <div style="font-size:10.5px;color:var(--text-muted)">${p.attendingDoctor ? p.attendingDoctor.split(',')[0] : 'Dr. Amit Sharma'}</div>
         </td>
         <td style="text-align:right">
           <button class="table-action-btn" onclick="selectPatient('${p.id}')">
@@ -334,9 +529,10 @@ function renderSidebarQueue() {
   const countBadge = document.getElementById('sidebar-patient-count');
   if (!list) return;
 
-  if (countBadge) countBadge.textContent = DEMO_PATIENTS.length;
+  const patientsList = state.patients || [];
+  if (countBadge) countBadge.textContent = patientsList.length;
 
-  let filtered = DEMO_PATIENTS;
+  let filtered = patientsList;
 
   // Search filter
   if (state.searchQuery) {
@@ -344,7 +540,7 @@ function renderSidebarQueue() {
     filtered = filtered.filter(p =>
       p.name.toLowerCase().includes(q) ||
       (p.mrn && p.mrn.toLowerCase().includes(q)) ||
-      p.condition.toLowerCase().includes(q)
+      (p.condition && p.condition.toLowerCase().includes(q))
     );
   }
 
@@ -365,13 +561,13 @@ function renderSidebarQueue() {
          id="pi-${p.id}" onclick="selectPatient('${p.id}')">
       <div class="patient-item-row-top">
         <span class="patient-item-name">${p.name}</span>
-        <span class="patient-item-time">⏰ ${p.appointmentTime.split(' ')[0]}</span>
+        <span class="patient-item-time">⏰ ${(p.appointmentTime || '10:00 AM').split(' ')[0]}</span>
       </div>
-      <div class="patient-item-row-mid">${p.condition}</div>
+      <div class="patient-item-row-mid">${p.condition || 'General Consultation'}</div>
       <div class="patient-item-row-bot">
         <span class="patient-mrn-label">${p.mrn || p.id} · ${p.age}y</span>
         <div style="display:flex;align-items:center;gap:6px">
-          <span class="triage-badge risk-${p.riskLevel}">
+          <span class="triage-badge risk-${p.riskLevel || 'medium'}">
             ${p.riskLevel === 'critical' ? 'Critical' : p.riskLevel === 'medium' ? 'Attention' : 'Routine'}
           </span>
           <button class="patient-delete-btn" onclick="deletePatient(event, '${p.id}')" title="Discharge patient">✕</button>
@@ -397,7 +593,27 @@ function setSidebarFilter(filter, btn) {
 async function selectPatient(id) {
   state.currentPatientId = id;
 
-  const patient = DEMO_PATIENTS.find(p => p.id === id);
+  let patient = state.patients.find(p => p.id === id);
+
+  // Attempt live fetch from /api/patient/:id
+  try {
+    const token = sessionStorage.getItem('consult360_token') || localStorage.getItem('consult360_token');
+    const res = await fetch(`/api/patient/${id}`, {
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.patient) {
+        patient = data.patient;
+        if (data.patient.summary) {
+          state.results[id] = data.patient.summary;
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[Fetch Patient API] Fallback to local:', err.message);
+  }
+
   if (!patient) return;
 
   // Highlight in sidebar queue
@@ -416,8 +632,8 @@ async function selectPatient(id) {
   // Reset tab to Overview
   switchTab('overview', document.querySelector('.clinical-tab-btn[data-tab="overview"]'));
 
-  // Render AI Pre-computed results
-  const result = DEMO_RESULTS[id];
+  // Render AI Pre-computed results or synthesized summary
+  const result = state.results[id] || (typeof DEMO_RESULTS !== 'undefined' ? DEMO_RESULTS[id] : null);
   if (result) {
     state.currentResult = result;
     renderAllTabs(result);
@@ -429,6 +645,7 @@ async function selectPatient(id) {
   // Update queue position indicator
   updateQueueNavIndicator();
 }
+
 
 function renderPatientHeader(patient) {
   const avatarEl = document.getElementById('hdr-avatar');

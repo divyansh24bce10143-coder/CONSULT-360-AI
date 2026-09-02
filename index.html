@@ -66,7 +66,7 @@
                 <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
                 <circle cx="12" cy="7" r="4"/>
               </svg>
-              <input type="text" id="auth-doctor-id" class="auth-text-input" placeholder="e.g. DR-CHEN-8834" required autocomplete="username" value="DR-CHEN-8834">
+              <input type="text" id="auth-doctor-id" class="auth-text-input" placeholder="e.g. DOC1001" required autocomplete="username" value="DOC1001">
             </div>
           </div>
 
@@ -82,7 +82,7 @@
                 <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
                 <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
               </svg>
-              <input type="password" id="auth-password" class="auth-text-input" placeholder="Enter secure password" required autocomplete="current-password" value="medicalpassword2026">
+              <input type="password" id="auth-password" class="auth-text-input" placeholder="Enter secure password" required autocomplete="current-password" value="consult360">
               <button type="button" class="auth-pwd-toggle" onclick="togglePasswordVisibility()" title="Toggle password visibility">
                 <svg id="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
@@ -98,7 +98,7 @@
               <input type="checkbox" id="auth-remember" class="auth-checkbox" checked>
               <span>Remember this device</span>
             </label>
-            <span class="auth-department-pill">Cardiology / Internal Med</span>
+            <span class="auth-department-pill" id="auth-dept-indicator">General Medicine / OPD</span>
           </div>
 
           <!-- Sign In Button -->
@@ -106,12 +106,23 @@
             Sign In to Clinical Workspace
           </button>
 
-          <!-- Quick Demo Autofill Helper -->
-          <div class="auth-demo-helper">
-            <span class="demo-helper-text">Authorized Attending:</span>
-            <button type="button" class="demo-helper-btn" onclick="fillDemoCredentials('DR-CHEN-8834', 'Dr. Sarah Chen, MD')">
-              Dr. Sarah Chen, MD (Cardiology)
-            </button>
+          <!-- Quick Demo Accounts (DOC1001, DOC1002, DOC1003) -->
+          <div class="auth-demo-accounts-panel">
+            <div class="demo-accounts-title">Select Demo Doctor Account:</div>
+            <div class="demo-accounts-grid">
+              <button type="button" class="demo-account-chip active" onclick="selectDemoDoctor('DOC1001', 'Dr. Amit Sharma', 'General Medicine')">
+                <span class="chip-id">DOC1001</span>
+                <span class="chip-info">Dr. Amit Sharma (General Med)</span>
+              </button>
+              <button type="button" class="demo-account-chip" onclick="selectDemoDoctor('DOC1002', 'Dr. Sarah Chen', 'Cardiology')">
+                <span class="chip-id">DOC1002</span>
+                <span class="chip-info">Dr. Sarah Chen (Cardiology)</span>
+              </button>
+              <button type="button" class="demo-account-chip" onclick="selectDemoDoctor('DOC1003', 'Dr. Rajesh Verma', 'Endocrinology')">
+                <span class="chip-id">DOC1003</span>
+                <span class="chip-info">Dr. Rajesh Verma (Endocrine)</span>
+              </button>
+            </div>
           </div>
 
           <!-- Security Note with Lucide Shield -->
@@ -121,7 +132,7 @@
               <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>
             </svg>
             <div class="auth-security-text">
-              <strong>Institutional Security Notice:</strong> Only authorized healthcare professionals can access patient records. All access is logged and audited under HIPAA and hospital governance protocols.
+              <strong>Hospital Governance &amp; HIPAA:</strong> All access is authenticated and audited. Passwords securely hashed. Demo accounts password: <code>consult360</code>.
             </div>
           </div>
 
@@ -193,6 +204,12 @@
       </div>
 
       <div class="topbar-right">
+        <!-- Notification Alert Drawer Button -->
+        <button class="btn-clinical-ghost btn-notif-trigger" id="btn-notifications" onclick="openNotificationsModal()" title="View hospital alerts & care gaps">
+          <span>🔔</span> Alerts
+          <span class="badge-notif-count" id="header-notif-count">2</span>
+        </button>
+
         <button class="btn-clinical-ghost" onclick="openHotkeysModal()" title="Keyboard shortcuts (Hotkey: ?)">
           <span>⌨️</span> Shortcuts
         </button>
@@ -202,11 +219,15 @@
           <span id="status-text">Checking Clinical Engine...</span>
         </div>
 
-        <div class="clinician-profile" onclick="handleSignOut()" title="Click to Sign Out">
-          <div class="clinician-avatar">SC</div>
-          <div class="clinician-info">
-            <div class="clinician-name">Dr. Sarah Chen, MD</div>
-            <div class="clinician-role">Attending Physician · <span style="color:var(--deep-teal);font-weight:700">Sign Out</span></div>
+        <!-- Clinician Profile with Dynamic Greeting -->
+        <div class="clinician-profile-container">
+          <div class="clinician-profile" onclick="handleSignOut()" title="Click to Sign Out">
+            <div class="clinician-avatar" id="clinician-avatar">AS</div>
+            <div class="clinician-info">
+              <div class="clinician-salutation-line" id="clinician-salutation">Good Morning,</div>
+              <div class="clinician-name" id="clinician-full-name">Dr. Amit Sharma</div>
+              <div class="clinician-role" id="clinician-dept">General Medicine · <span style="color:var(--deep-teal);font-weight:700">Sign Out</span></div>
+            </div>
           </div>
         </div>
 
@@ -675,12 +696,42 @@
     </div>
   </div>
 
+  <!-- ── HOSPITAL NOTIFICATIONS & ALERTS MODAL ────────────────────────── -->
+  <div id="notifications-modal" class="clinical-modal-overlay hidden" onclick="handleNotifBackdropClick(event)">
+    <div class="clinical-modal-card notif-modal-card">
+      <div class="modal-header-clinical">
+        <div class="modal-title-group">
+          <div class="modal-icon-badge notif-badge-icon">🔔</div>
+          <div>
+            <h3 class="modal-title-text">Clinical Notifications &amp; Alerts</h3>
+            <p class="modal-subtitle-text">Real-time hospital alerts, critical risk warnings, and overdue investigations.</p>
+          </div>
+        </div>
+        <button class="modal-close-btn" onclick="closeNotificationsModal()">✕</button>
+      </div>
+
+      <div class="notif-list-container" id="notif-list-container">
+        <!-- Injected via JavaScript from /api/notifications -->
+      </div>
+
+      <div class="modal-actions-footer">
+        <button class="btn-clinical-ghost" onclick="markAllNotificationsRead()">
+          ✓ Mark All as Read
+        </button>
+        <button class="btn-clinical-primary" onclick="closeNotificationsModal()">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
   </div> <!-- End #app-workspace -->
 
   <!-- Scripts -->
-  <script src="demo-data.js?v=7"></script>
-  <script src="app.js?v=7"></script>
+  <script src="demo-data.js?v=8"></script>
+  <script src="app.js?v=8"></script>
 </body>
 </html>
+
 
 
