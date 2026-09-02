@@ -46,30 +46,27 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // ── Hospital Clinical Authentication Gateway ───────────────────────────────
 function initAuthGateway() {
-  const isAuth = sessionStorage.getItem('consult360_auth') === 'true' || 
-                 localStorage.getItem('consult360_auth') === 'true';
-
-  const storedDoc = sessionStorage.getItem('consult360_doctor') || localStorage.getItem('consult360_doctor');
-  if (storedDoc) {
-    try {
-      state.doctor = JSON.parse(storedDoc);
-    } catch (e) {}
-  }
+  state.authenticated = false;
 
   const authScreen = document.getElementById('auth-screen');
   const appWorkspace = document.getElementById('app-workspace');
+  const authForm = document.getElementById('auth-form');
+  const loadingState = document.getElementById('auth-loading-state');
 
-  if (isAuth) {
-    state.authenticated = true;
-    updateClinicianGreeting();
-    if (authScreen) authScreen.classList.add('hidden');
-    if (appWorkspace) appWorkspace.classList.remove('hidden');
-  } else {
-    state.authenticated = false;
-    if (authScreen) authScreen.classList.remove('hidden');
-    if (appWorkspace) appWorkspace.classList.add('hidden');
+  // Always display login screen on page open
+  if (authScreen) authScreen.classList.remove('hidden');
+  if (appWorkspace) appWorkspace.classList.add('hidden');
+  if (authForm) authForm.classList.remove('hidden');
+  if (loadingState) loadingState.classList.add('hidden');
+
+  // If a doctor was previously chosen, highlight their chip & populate ID
+  const savedDocId = localStorage.getItem('consult360_saved_doc_id') || 'DOC1001';
+  const idInput = document.getElementById('auth-doctor-id');
+  if (idInput && savedDocId) {
+    idInput.value = savedDocId;
   }
 }
+
 
 function selectDemoDoctor(id, name, dept) {
   const idInput = document.getElementById('auth-doctor-id');
@@ -80,9 +77,12 @@ function selectDemoDoctor(id, name, dept) {
   if (pwdInput) pwdInput.value = 'consult360';
   if (deptPill) deptPill.textContent = `${dept} / OPD`;
 
+  localStorage.setItem('consult360_saved_doc_id', id);
+
   document.querySelectorAll('.demo-account-chip').forEach(chip => {
     chip.classList.toggle('active', chip.querySelector('.chip-id')?.textContent === id);
   });
+
 
   showToast(`Selected Demo: ${name} (${id})`);
 }
@@ -188,6 +188,8 @@ async function handleAuthSubmit(event) {
   storage.setItem('consult360_auth', 'true');
   storage.setItem('consult360_token', loginResult.token || '');
   storage.setItem('consult360_doctor', JSON.stringify(loginResult.doctor));
+  localStorage.setItem('consult360_saved_doc_id', doctorId);
+
 
   await new Promise(r => setTimeout(r, 250));
 
