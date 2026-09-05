@@ -68,7 +68,7 @@ router.post('/upload-and-analyze', upload.array('reports', 10), async (req, res)
     const fileCount = files.length;
     sendEvent(res, 'progress', {
       step: 'pdf',
-      label: `📎 ${fileCount} file${fileCount > 1 ? 's' : ''} received`,
+      label: `${fileCount} file${fileCount > 1 ? 's' : ''} received`,
       percent: 10,
       done: true
     });
@@ -89,7 +89,7 @@ router.post('/upload-and-analyze', upload.array('reports', 10), async (req, res)
           // ── PDF: try text extraction first ─────────────────────────────
           sendEvent(res, 'progress', {
             step: 'ocr',
-            label: `📄 Reading PDF: ${fileLabel}`,
+            label: `Reading PDF: ${fileLabel}`,
             percent: 15 + Math.round((i / fileCount) * 25)
           });
 
@@ -99,7 +99,7 @@ router.post('/upload-and-analyze', upload.array('reports', 10), async (req, res)
             // ── Scanned / Visual PDF: Use Gemini Multimodal PDF engine directly ──
             sendEvent(res, 'progress', {
               step: 'ocr',
-              label: `🔍 Scanned / Visual PDF detected — processing with Gemini Vision AI...`,
+              label: `Scanned / Visual PDF detected — processing with Gemini Vision AI...`,
               percent: 20 + Math.round((i / fileCount) * 25)
             });
 
@@ -116,7 +116,7 @@ router.post('/upload-and-analyze', upload.array('reports', 10), async (req, res)
             pdfCount++;
             sendEvent(res, 'progress', {
               step: 'ocr',
-              label: `✅ PDF extracted: ${file.originalname}`,
+              label: `PDF extracted: ${file.originalname}`,
               percent: 25 + Math.round(((i + 1) / fileCount) * 20),
               done: false
             });
@@ -136,7 +136,7 @@ router.post('/upload-and-analyze', upload.array('reports', 10), async (req, res)
           // ── Image: Gemini Vision OCR ─────────────────────────────────────
           sendEvent(res, 'progress', {
             step: 'ocr',
-            label: `🔍 Reading image: ${fileLabel}`,
+            label: `Reading image: ${fileLabel}`,
             percent: 15 + Math.round((i / fileCount) * 25)
           });
 
@@ -156,7 +156,7 @@ router.post('/upload-and-analyze', upload.array('reports', 10), async (req, res)
 
             sendEvent(res, 'progress', {
               step: 'ocr',
-              label: `✅ ${typeLabel} extracted: ${file.originalname}`,
+              label: `${typeLabel} extracted: ${file.originalname}`,
               percent: 20 + Math.round(((i + 1) / fileCount) * 25),
               done: false
             });
@@ -168,7 +168,7 @@ router.post('/upload-and-analyze', upload.array('reports', 10), async (req, res)
         extractionErrors.push(`${file.originalname}: ${fileErr.message}`);
         sendEvent(res, 'progress', {
           step: 'ocr',
-          label: `⚠️ ${file.originalname}: ${fileErr.message}`,
+          label: `Notice: ${file.originalname}: ${fileErr.message}`,
           percent: 20
         });
       }
@@ -188,28 +188,28 @@ router.post('/upload-and-analyze', upload.array('reports', 10), async (req, res)
     const rawCombined = extractedParts.join('');
     sendEvent(res, 'progress', {
       step: 'ocr',
-      label: `✅ ${pdfCount} PDF${pdfCount !== 1 ? 's' : ''} + ${imageCount} image${imageCount !== 1 ? 's' : ''} extracted`,
+      label: `${pdfCount} PDF${pdfCount !== 1 ? 's' : ''} + ${imageCount} image${imageCount !== 1 ? 's' : ''} extracted`,
       percent: 42,
       done: true
     });
 
     // ── Smart text trimming ────────────────────────────────────────────────
-    sendEvent(res, 'progress', { step: 'entities', label: '🧬 Processing medical entities...', percent: 50 });
+    sendEvent(res, 'progress', { step: 'entities', label: 'Processing medical entities...', percent: 50 });
     const smartText = extractSmartText(rawCombined);
     sendEvent(res, 'progress', {
       step: 'entities',
-      label: `🧬 ${smartText.length.toLocaleString()} chars of medical content ready`,
+      label: `${smartText.length.toLocaleString()} chars of medical content ready`,
       percent: 58,
       done: true
     });
 
     // ── Timeline + Changes ────────────────────────────────────────────────
-    sendEvent(res, 'progress', { step: 'timeline', label: '📅 Building patient timeline...', percent: 62 });
-    sendEvent(res, 'progress', { step: 'changes',  label: '📊 Detecting clinical changes...', percent: 67 });
+    sendEvent(res, 'progress', { step: 'timeline', label: 'Building patient timeline...', percent: 62 });
+    sendEvent(res, 'progress', { step: 'changes',  label: 'Detecting clinical changes...', percent: 67 });
 
     // ── Gemini AI Analysis ────────────────────────────────────────────────
-    sendEvent(res, 'progress', { step: 'risk',   label: '🚨 Analysing risk flags...', percent: 72 });
-    sendEvent(res, 'progress', { step: 'gemini', label: '✨ Gemini AI generating brief...', percent: 77 });
+    sendEvent(res, 'progress', { step: 'risk',   label: 'Analyzing risk flags...', percent: 72 });
+    sendEvent(res, 'progress', { step: 'gemini', label: 'Gemini AI generating brief...', percent: 77 });
 
     console.log(`[Stream] Analyzing ${extractedParts.length} sources, ${smartText.length} chars...`);
     const t0 = Date.now();
@@ -222,7 +222,7 @@ router.post('/upload-and-analyze', upload.array('reports', 10), async (req, res)
     // ── Send result ───────────────────────────────────────────────────────
     sendEvent(res, 'progress', {
       step: 'gemini',
-      label: `✅ Complete in ${elapsed}s — ${fileCount} file${fileCount > 1 ? 's' : ''} analyzed`,
+      label: `Complete in ${elapsed}s — ${fileCount} file${fileCount > 1 ? 's' : ''} analyzed`,
       percent: 100,
       done: true
     });

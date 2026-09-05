@@ -122,7 +122,7 @@ async function handleAuthSubmit(event) {
   const remember = document.getElementById('auth-remember')?.checked;
 
   if (!doctorId || !password) {
-    showToast('⚠️ Please enter Doctor ID and Password', 'error');
+    showToast('Please enter Doctor ID and Password', 'error');
     return;
   }
 
@@ -144,7 +144,7 @@ async function handleAuthSubmit(event) {
     });
     const data = await res.json();
     if (!res.ok) {
-      showToast(`⚠️ ${data.error || 'Login failed.'}`, 'error');
+      showToast(`${data.error || 'Login failed.'}`, 'error');
       return;
     }
     loginResult = data;
@@ -212,7 +212,7 @@ async function handleAuthSubmit(event) {
   showDashboardView();
   updateClinicianGreeting();
   await loadHospitalData();
-  showToast(`✓ ${getSalutation()} ${state.doctor.name} (${state.doctor.department})`);
+  showToast(`${getSalutation()} ${state.doctor.name} (${state.doctor.department})`);
 }
 
 function fillDemoCredentials(id, name) {
@@ -336,9 +336,6 @@ function renderNotificationsList() {
 
   container.innerHTML = state.notifications.map(n => `
     <div class="notif-card-item ${!n.isRead ? 'unread' : ''} notif-${n.priority || 'medium'}" onclick="markNotificationRead('${n.notificationId}')">
-      <div class="notif-icon-col">
-        ${n.type === 'critical_patient' ? '🚨' : n.type === 'investigation_pending' ? '🔬' : n.type === 'followup_overdue' ? '⏰' : '📋'}
-      </div>
       <div class="notif-content-col">
         <div class="notif-header-row">
           <span class="notif-card-title">${n.title}</span>
@@ -385,7 +382,7 @@ async function checkServerHealth() {
     } else {
       dot.className = 'status-dot disconnected';
       txt.textContent = 'Engine Connected — Key Missing';
-      showToast('⚠️ GEMINI_API_KEY missing in server/.env', 'error');
+      showToast('GEMINI_API_KEY missing in server/.env', 'error');
     }
   } catch (e) {
     state.serverOnline = false;
@@ -515,7 +512,7 @@ function renderDashboardWorklist() {
         </td>
         <td>
           <span class="triage-badge risk-${p.riskLevel || 'medium'}">
-            ${p.riskLevel === 'critical' ? '🔴 Critical' : p.riskLevel === 'medium' ? '🟠 High Attention' : '🟢 Routine'}
+            ${p.riskLevel === 'critical' ? 'Critical' : p.riskLevel === 'medium' ? 'High Attention' : 'Routine'}
           </span>
         </td>
         <td>
@@ -528,7 +525,7 @@ function renderDashboardWorklist() {
         </td>
         <td>
           <div class="table-gap-alert">
-            <span>⚠️</span> ${p.overdueGap || 'Routine Monitoring'}
+            ${p.overdueGap || 'Routine Monitoring'}
           </div>
         </td>
         <td>
@@ -715,11 +712,11 @@ function renderPatientHeader(patient) {
   
   if (riskEl) {
     riskEl.className = `triage-status-tag risk-${patient.riskLevel}`;
-    riskEl.textContent = patient.riskLevel === 'critical' ? '🔴 Critical Attention Required' : patient.riskLevel === 'medium' ? '🟠 High Priority Review' : '🟢 Routine Care';
+    riskEl.textContent = patient.riskLevel === 'critical' ? 'Critical Attention Required' : patient.riskLevel === 'medium' ? 'High Priority Review' : 'Routine Care';
   }
 
   if (metaEl) {
-    metaEl.textContent = `${patient.age}y · ${patient.gender} · Blood Group ${patient.bloodGroup} · 🕐 ${patient.appointmentTime} · ${patient.room || 'Clinic Area'} · Attending: ${patient.attendingDoctor || 'Dr. Sarah Chen, MD'}`;
+    metaEl.textContent = `${patient.age}y · ${patient.gender} · Blood Group ${patient.bloodGroup} · ${patient.appointmentTime} · ${patient.room || 'Clinic Area'} · Attending: ${patient.attendingDoctor || 'Dr. Sarah Chen, MD'}`;
   }
 
   if (allergyEl) {
@@ -747,9 +744,9 @@ function renderCareJourneyStepper(patient) {
 
   const statusIcons = {
     completed: '✓',
-    attention: '⚠️',
+    attention: '!',
     missed: '✕',
-    pending: '⏱'
+    pending: '—'
   };
 
   const statusLabels = {
@@ -847,7 +844,7 @@ function renderOverview(r) {
   // Medications
   const medsHtml = (e.medications || []).map(m => `
     <span class="clinical-tag ${m.change === 'new' ? 'tag-new' : m.change === 'dose-changed' ? 'tag-warning' : ''}">
-      💊 <strong>${m.name} ${m.dose}</strong> (${m.frequency}) ${m.change === 'new' ? '· 🆕 NEW' : m.change === 'dose-changed' ? '· ↑ TITRATED' : ''}
+      <strong>${m.name} ${m.dose}</strong> (${m.frequency}) ${m.change === 'new' ? '· [NEW]' : m.change === 'dose-changed' ? '· [TITRATED]' : ''}
     </span>
   `).join('');
 
@@ -885,10 +882,10 @@ function renderOverview(r) {
         <div class="ai-summary-header-row">
           <div style="display:flex;align-items:center;gap:8px">
             <span class="ai-summary-tag">
-              <span>✨</span> PRE-CONSULTATION CLINICAL AI SYNTHESIS
+              PRE-CONSULTATION CLINICAL AI SYNTHESIS
             </span>
             <button class="btn-copy-brief" onclick="copyAiBriefText()" title="Copy pre-consultation summary to clipboard">
-              <span>📋</span> Copy Brief
+              Copy Brief
             </button>
           </div>
           <span class="ai-confidence-pill">
@@ -902,17 +899,17 @@ function renderOverview(r) {
       <!-- Vitals & Chief Complaints Grid -->
       <div class="clinical-two-col-grid">
         <div class="clinical-card" style="padding:16px">
-          <h3 class="card-heading" style="margin-bottom:12px">📊 Encounter Vital Signs Matrix</h3>
+          <h3 class="card-heading" style="margin-bottom:12px">Encounter Vital Signs Matrix</h3>
           <div class="vitals-matrix-grid">
             ${vitalsHtml || '<p style="color:var(--text-muted)">No vitals extracted.</p>'}
           </div>
         </div>
 
         <div class="clinical-card" style="padding:16px">
-          <h3 class="card-heading" style="margin-bottom:8px">🩺 Chief Complaints &amp; Active Symptoms</h3>
+          <h3 class="card-heading" style="margin-bottom:8px">Chief Complaints &amp; Active Symptoms</h3>
           <p style="font-size:12.5px;color:var(--text-secondary);line-height:1.5;margin-bottom:12px">${s.chiefComplaint || 'Patient presents for scheduled evaluation.'}</p>
           <div class="clinical-tags-container">
-            ${(e.symptoms || []).map(sym => `<span class="clinical-tag">🚩 ${sym.description}</span>`).join('')}
+            ${(e.symptoms || []).map(sym => `<span class="clinical-tag">${sym.description}</span>`).join('')}
           </div>
         </div>
       </div>
@@ -920,14 +917,14 @@ function renderOverview(r) {
       <!-- Problem List & Active Medications -->
       <div class="clinical-two-col-grid">
         <div class="clinical-card" style="padding:16px">
-          <h3 class="card-heading" style="margin-bottom:12px">🔬 Active Problem List &amp; Diagnoses</h3>
+          <h3 class="card-heading" style="margin-bottom:12px">Active Problem List &amp; Diagnoses</h3>
           <div class="clinical-tags-container">
             ${diagHtml || '<span class="clinical-tag">None documented</span>'}
           </div>
         </div>
 
         <div class="clinical-card" style="padding:16px">
-          <h3 class="card-heading" style="margin-bottom:12px">💊 Reconciled Active Medications</h3>
+          <h3 class="card-heading" style="margin-bottom:12px">Reconciled Active Medications</h3>
           <div class="clinical-tags-container">
             ${medsHtml || '<span class="clinical-tag">None documented</span>'}
           </div>
@@ -937,15 +934,15 @@ function renderOverview(r) {
       <!-- Labs Matrix & Physician Action Directives -->
       <div class="clinical-two-col-grid">
         <div class="clinical-card" style="padding:16px">
-          <h3 class="card-heading" style="margin-bottom:12px">🧪 Laboratory Biomarker Extract</h3>
+          <h3 class="card-heading" style="margin-bottom:12px">Laboratory Biomarker Extract</h3>
           <div>${labsHtml || '<p style="color:var(--text-muted)">No lab results available.</p>'}</div>
         </div>
 
         <div class="clinical-card" style="padding:16px">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-            <h3 class="card-heading" style="margin-bottom:0">✅ Physician Next-Action Directives</h3>
+            <h3 class="card-heading" style="margin-bottom:0">Physician Next-Action Directives</h3>
             <button class="btn-approve-all" onclick="approveAllDirectives()" title="Approve all recommended actions into chart orders">
-              ✓ Approve All
+              Approve All Directives
             </button>
           </div>
           <div>${actionsHtml || '<p style="color:var(--text-muted)">No action directives generated.</p>'}</div>
@@ -957,21 +954,21 @@ function renderOverview(r) {
       <div class="clinical-card" style="padding:18px;border-left:4px solid var(--clinical-blue)">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border-light)">
           <div style="display:flex;align-items:center;gap:10px">
-            <h3 class="card-heading">📋 Active Encounter Chart Records &amp; Orders Log</h3>
+            <h3 class="card-heading">Active Encounter Chart Records &amp; Orders Log</h3>
             <span class="table-badge" id="inline-chart-count">0 items recorded</span>
           </div>
           <div style="display:flex;gap:8px">
             <button class="btn-clinical-outline" onclick="copyChartRecordText()">
-              <span>📋</span> Copy to Clipboard (EHR)
+              Copy to Clipboard (EHR)
             </button>
             <button class="btn-clinical-primary" onclick="openChartRecordsModal()">
-              <span>🔍</span> Open Full Chart View
+              Open Full Chart View
             </button>
           </div>
         </div>
         <div id="inline-chart-record-container">
           <p style="font-size:12.5px;color:var(--text-muted);font-style:italic">
-            Check off any Physician Directive above or click "[✓ Accept &amp; Order]" on risk signals to log orders and actions into this patient's chart record.
+            Check off any Physician Directive above or click "[Accept &amp; Order]" on risk signals to log orders and actions into this patient's chart record.
           </p>
         </div>
       </div>
@@ -1031,7 +1028,7 @@ function renderInlineChartLog() {
   if (totalItems === 0) {
     container.innerHTML = `
       <p style="font-size:12.5px;color:var(--text-muted);font-style:italic">
-        Check off any Physician Directive above or click "[✓ Accept &amp; Order]" on risk signals to log orders and actions into this patient's chart record.
+        Check off any Physician Directive above or click "[Accept &amp; Order]" on risk signals to log orders and actions into this patient's chart record.
       </p>
     `;
     return;
@@ -1042,7 +1039,7 @@ function renderInlineChartLog() {
   chart.orders.forEach(o => {
     itemsHtml.push(`
       <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg-subtle);border:1px solid var(--border-light);border-radius:var(--radius-md);margin-bottom:6px">
-        <span style="font-weight:600;font-size:12.5px;color:var(--navy-900)">🔬 ${o.title}</span>
+        <span style="font-weight:600;font-size:12.5px;color:var(--navy-900)">Order: ${o.title}</span>
         <span style="font-size:11px;font-family:var(--font-mono);color:var(--text-muted)">${o.time} · Order Placed</span>
       </div>
     `);
@@ -1051,7 +1048,7 @@ function renderInlineChartLog() {
   chart.directives.forEach(d => {
     itemsHtml.push(`
       <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:var(--radius-md);margin-bottom:6px">
-        <span style="font-size:12.5px;color:#065f46;font-weight:600">✓ ${d.text}</span>
+        <span style="font-size:12.5px;color:#065f46;font-weight:600">• ${d.text}</span>
         <span style="font-size:11px;font-family:var(--font-mono);color:#047857">${d.time} · Logged</span>
       </div>
     `);
@@ -1060,7 +1057,7 @@ function renderInlineChartLog() {
   chart.referrals.forEach(r => {
     itemsHtml.push(`
       <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:var(--radius-md);margin-bottom:6px">
-        <span style="font-weight:600;font-size:12.5px;color:#1e40af">⚑ ${r.title}</span>
+        <span style="font-weight:600;font-size:12.5px;color:#1e40af">Referral: ${r.title}</span>
         <span style="font-size:11px;font-family:var(--font-mono);color:#2563eb">${r.time} · Dispatched</span>
       </div>
     `);
@@ -1072,7 +1069,7 @@ function renderInlineChartLog() {
     </div>
     <div style="font-size:11px;color:var(--text-muted);display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border-light);padding-top:6px">
       <span>Authenticated by <strong>Dr. Sarah Chen, MD</strong></span>
-      <span style="color:var(--status-success);font-weight:600">✓ Chart Synchronized</span>
+      <span style="color:var(--status-success);font-weight:600">Chart Synchronized</span>
     </div>
   `;
 }
@@ -1095,7 +1092,7 @@ function toggleDirective(idx) {
         clinician: 'Dr. Sarah Chen, MD'
       });
     }
-    showToast('✓ Clinical action checked and logged into chart record');
+    showToast('Clinical action checked and logged into chart record');
   } else {
     chart.directives = chart.directives.filter(d => d.text !== directiveText);
     showToast('Directive removed from chart record');
@@ -1120,21 +1117,21 @@ function openChartRecordsModal() {
 
   const ordersListHtml = chart.orders.length > 0 ? chart.orders.map(o => `
     <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg-subtle);border:1px solid var(--border-light);border-radius:var(--radius-md);margin-bottom:6px">
-      <div style="font-weight:600;font-size:12.5px;color:var(--navy-900)">🔬 ${o.title}</div>
+      <div style="font-weight:600;font-size:12.5px;color:var(--navy-900)">Order: ${o.title}</div>
       <div style="font-size:11px;font-family:var(--font-mono);color:var(--text-muted)">${o.time} · Ordered</div>
     </div>
   `).join('') : '<p style="font-size:12px;color:var(--text-muted);font-style:italic">No active diagnostic orders placed this encounter.</p>';
 
   const directivesListHtml = chart.directives.length > 0 ? chart.directives.map(d => `
     <div style="display:flex;align-items:flex-start;justify-content:space-between;padding:8px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:var(--radius-md);margin-bottom:6px">
-      <div style="font-size:12px;color:#065f46;line-height:1.4">✓ <strong>${d.text}</strong></div>
+      <div style="font-size:12px;color:#065f46;line-height:1.4">• <strong>${d.text}</strong></div>
       <div style="font-size:11px;font-family:var(--font-mono);color:#047857;white-space:nowrap;margin-left:12px">${d.time}</div>
     </div>
   `).join('') : '<p style="font-size:12px;color:var(--text-muted);font-style:italic">No checklist directives signed off yet.</p>';
 
   const referralsListHtml = chart.referrals.length > 0 ? chart.referrals.map(r => `
     <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:var(--radius-md);margin-bottom:6px">
-      <div style="font-weight:600;font-size:12.5px;color:#1e40af">⚑ ${r.title}</div>
+      <div style="font-weight:600;font-size:12.5px;color:#1e40af">Referral: ${r.title}</div>
       <div style="font-size:11px;font-family:var(--font-mono);color:#2563eb">${r.time} · Dispatched</div>
     </div>
   `).join('') : '<p style="font-size:12px;color:var(--text-muted);font-style:italic">No specialty referrals dispatched.</p>';
@@ -1222,7 +1219,7 @@ function copyChartRecordText() {
   text += `\nAUTHENTICATION:\nElectronically Signed: Dr. Sarah Chen, MD\n`;
 
   navigator.clipboard.writeText(text).then(() => {
-    showToast('📋 Chart record copied to clipboard (EHR format)');
+    showToast('Chart record copied to clipboard (EHR format)');
   });
 }
 
@@ -1231,7 +1228,7 @@ function renderTimeline(events, filter = 'all') {
 
   const filterBtns = ['all', 'visit', 'lab', 'medication', 'procedure'].map(f => `
     <button class="pill-btn ${filter === f ? 'active' : ''}" onclick="renderTimeline(state.currentResult.timeline, '${f}')">
-      ${{all:'All Events', visit:'🏥 Visits', lab:'🧪 Labs', medication:'💊 Meds', procedure:'🔧 Procedures'}[f]}
+      ${{all:'All Events', visit:'Visits', lab:'Labs', medication:'Medications', procedure:'Procedures'}[f]}
     </button>
   `).join('');
 
@@ -1337,7 +1334,7 @@ function renderRisk(flags) {
 
         <div class="xai-audit-field">
           <span class="xai-field-label">Source Document:</span>
-          <span class="xai-field-value" style="color:var(--text-muted);font-size:12px">📄 ${f.sourceDocument} (${f.date})</span>
+          <span class="xai-field-value" style="color:var(--text-muted);font-size:12px">${f.sourceDocument} (${f.date})</span>
         </div>
 
         <div class="xai-audit-field">
@@ -1351,13 +1348,13 @@ function renderRisk(flags) {
         <span class="override-label-text">Clinician Override / Order Decision:</span>
         <div class="override-button-group">
           <button class="btn-override-accept" onclick="handleRiskOverride('${f.id || idx}', 'accept', '${f.risk}')">
-            ✓ Accept &amp; Order
+            Accept &amp; Order
           </button>
           <button class="btn-override-refer" onclick="handleRiskOverride('${f.id || idx}', 'refer', '${f.risk}')">
-            ⚑ Specialist Referral
+            Specialist Referral
           </button>
           <button class="btn-override-dismiss" onclick="handleRiskOverride('${f.id || idx}', 'dismiss', '${f.risk}')">
-            ✕ Dismiss Flag
+            Dismiss Flag
           </button>
         </div>
       </div>
@@ -1383,14 +1380,14 @@ function handleRiskOverride(id, action, title) {
 
   if (action === 'accept') {
     chart.orders.push({ title, time: timeStr });
-    bar.innerHTML = `<span style="font-size:12px;color:var(--status-success);font-weight:700">✓ Recommendation Accepted &amp; Added to Patient Care Plan Orders</span>`;
-    showToast(`✓ "${title}" accepted into care plan orders`);
+    bar.innerHTML = `<span style="font-size:12px;color:var(--status-success);font-weight:700">Recommendation Accepted &amp; Added to Patient Care Plan Orders</span>`;
+    showToast(`"${title}" accepted into care plan orders`);
   } else if (action === 'refer') {
     chart.referrals.push({ title: `Specialty Consult: ${title}`, time: timeStr });
-    bar.innerHTML = `<span style="font-size:12px;color:var(--status-info);font-weight:700">⚑ Specialty Consultation Referral Dispatched</span>`;
-    showToast(`⚑ Referral consultation scheduled for "${title}"`);
+    bar.innerHTML = `<span style="font-size:12px;color:var(--status-info);font-weight:700">Specialty Consultation Referral Dispatched</span>`;
+    showToast(`Referral consultation scheduled for "${title}"`);
   } else if (action === 'dismiss') {
-    bar.innerHTML = `<span style="font-size:12px;color:var(--text-muted);font-style:italic">✕ Flag dismissed by attending clinician (reason documented)</span>`;
+    bar.innerHTML = `<span style="font-size:12px;color:var(--text-muted);font-style:italic">Flag dismissed by attending clinician (reason documented)</span>`;
     showToast(`Flag dismissed for "${title}"`);
   }
 
@@ -1402,7 +1399,7 @@ function renderMissing(missing) {
   const cardsHtml = missing.map(m => `
     <div class="missing-gap-card ${m.urgency}">
       <div class="gap-info-left">
-        <div class="gap-test-title">🔬 ${m.test}</div>
+        <div class="gap-test-title">${m.test}</div>
         <div class="gap-clinical-rationale">${m.reason}</div>
         <div class="gap-metadata-row">
           <span>Indication: <strong>${m.basedOnCondition}</strong></span>
@@ -1438,7 +1435,7 @@ function handleOrderInvestigation(testName) {
     });
     updateChartCounterBadge();
   }
-  showToast(`📋 Lab order created & saved to chart: ${testName}`);
+  showToast(`Lab order created & saved to chart: ${testName}`);
 }
 
 
@@ -1479,16 +1476,7 @@ function setupUploadArea() {
 }
 
 function getFileIcon(file) {
-  if (file.type === 'application/pdf') return '📄';
-  if (file.type === 'text/plain')      return '📝';
-  const name = file.name.toLowerCase();
-  if (/ecg|ekg/.test(name))           return '🫀';
-  if (/echo/.test(name))              return '🫀';
-  if (/xray|x-ray|chest/.test(name)) return '🫁';
-  if (/rx|prescription/.test(name))  return '💊';
-  if (/lab|blood|report/.test(name)) return '🧪';
-  if (file.type.startsWith('image/')) return '🖼️';
-  return '📎';
+  return `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;color:var(--deep-teal)"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
 }
 
 function getFileTypeBadge(file) {
@@ -1508,15 +1496,15 @@ function addFiles(newFiles) {
   const allowed = ['application/pdf', 'text/plain', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
   newFiles.forEach(f => {
     if (!allowed.includes(f.type)) {
-      showToast(`⚠️ ${f.name} — format not supported`, 'error');
+      showToast(`${f.name} — format not supported`, 'error');
       return;
     }
     if (f.size > 20 * 1024 * 1024) {
-      showToast(`⚠️ ${f.name} exceeds 20MB limit`, 'error');
+      showToast(`${f.name} exceeds 20MB limit`, 'error');
       return;
     }
     if (state.selectedFiles.length >= 10) {
-      showToast('⚠️ Maximum 10 files per patient', 'error');
+      showToast('Maximum 10 files per patient', 'error');
       return;
     }
     state.selectedFiles.push(f);
@@ -1565,7 +1553,7 @@ function renderFileList() {
   }
 
   const btn = document.getElementById('btn-analyze');
-  if (btn) btn.textContent = `🚀 Ingest & Synthesize ${state.selectedFiles.length} Report${state.selectedFiles.length > 1 ? 's' : ''}`;
+  if (btn) btn.textContent = `Ingest & Synthesize ${state.selectedFiles.length} Report${state.selectedFiles.length > 1 ? 's' : ''}`;
 }
 
 async function startAnalysis() {
@@ -1577,7 +1565,7 @@ async function startAnalysis() {
 async function processFiles(files) {
   if (!state.serverOnline) {
     closeUploadModal();
-    showToast('❌ Backend server offline. Start server with: cd server && npm start', 'error');
+    showToast('Backend server offline. Please start backend service.', 'error');
     return;
   }
 
@@ -1629,7 +1617,6 @@ async function processFiles(files) {
 
   document.getElementById('tab-overview').innerHTML = `
     <div style="text-align:center;padding:48px 20px">
-      <div style="font-size:24px;margin-bottom:12px">⏳</div>
       <h3 style="font-size:15px;font-weight:700;color:var(--navy-900);margin-bottom:6px">Synthesizing Clinical Intelligence Brief</h3>
       <p style="font-size:12.5px;color:var(--text-secondary)" id="stream-status-overview">Reading and extracting medical tokens from ${files.length} document(s)...</p>
     </div>
@@ -1721,7 +1708,7 @@ async function processFiles(files) {
             }
 
             renderAllTabs(result);
-            showToast('✅ Pre-consultation brief synthesized successfully');
+            showToast('Pre-consultation brief synthesized successfully');
             setTimeout(() => {
               if (pipeContainer) pipeContainer.classList.add('hidden');
             }, 2500);
@@ -1747,7 +1734,7 @@ async function processFiles(files) {
         <p style="font-size:13px;color:var(--text-primary);margin-bottom:12px">${err.message}</p>
         <button class="btn-clinical-secondary" onclick="showDashboardView()">Return to Worklist</button>
       </div>`;
-    showToast('❌ ' + err.message, 'error');
+    showToast(err.message, 'error');
   }
 }
 
@@ -1794,7 +1781,7 @@ function printPatientBrief() {
 }
 
 function exportWorklistReport() {
-  showToast('📄 Clinical worklist triage report exported');
+  showToast('Clinical worklist triage report exported');
   window.print();
 }
 
@@ -1827,7 +1814,7 @@ function copyAiBriefText() {
   const s = result.summary || {};
   const txt = `CONSULT 360 AI CLINICAL BRIEF\n${s.oneLiner || ''}\n\nClinical Summary:\n${s.clinicalSummary || s.chiefComplaint || ''}`;
   navigator.clipboard.writeText(txt).then(() => {
-    showToast('📋 Clinical AI Brief copied to clipboard');
+    showToast('Clinical AI Brief copied to clipboard');
   });
 }
 
@@ -1852,7 +1839,7 @@ function approveAllDirectives() {
   });
 
   updateChartCounterBadge();
-  showToast('✓ All physician directives approved and logged into chart record');
+  showToast('All physician directives approved and logged into chart record');
 }
 
 // ── Keyboard Shortcuts Modal Controls ──────────────────────────────────────

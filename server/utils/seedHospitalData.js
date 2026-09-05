@@ -807,7 +807,7 @@ function generateHospitalDatabase() {
     notifications.push({
       notificationId: `NOT${notifCounter++}`,
       doctorId: doc.doctorId,
-      title: '🚨 Critical Triage Alert',
+      title: 'Critical Triage Alert',
       message: `Patient under ${doc.department} requires immediate review (elevated biomarker trajectory).`,
       priority: 'high',
       isRead: false,
@@ -819,7 +819,7 @@ function generateHospitalDatabase() {
     notifications.push({
       notificationId: `NOT${notifCounter++}`,
       doctorId: doc.doctorId,
-      title: '⏰ Overdue Investigation Follow-up',
+      title: 'Overdue Investigation Follow-up',
       message: `2 diagnostic orders pending completion in ${doc.department}.`,
       priority: 'medium',
       isRead: false,
@@ -831,7 +831,7 @@ function generateHospitalDatabase() {
     notifications.push({
       notificationId: `NOT${notifCounter++}`,
       doctorId: doc.doctorId,
-      title: '🏥 Clinical Shift Initialized',
+      title: 'Clinical Shift Initialized',
       message: `Good Morning, ${doc.name}. Outpatient worklist queue synchronized with hospital EHR.`,
       priority: 'low',
       isRead: true,

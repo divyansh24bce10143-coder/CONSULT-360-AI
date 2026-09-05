@@ -3,7 +3,7 @@
     "hospitalName": "St. Jude Medical Center",
     "system": "Consult 360 AI Hospital Information System (HIS)",
     "version": "2.4.0",
-    "generatedAt": "2026-09-02T12:04:35.697Z",
+    "generatedAt": "2026-09-05T21:06:51.328Z",
     "counts": {
       "doctors": 10,
       "patients": 100,
@@ -33055,7 +33055,7 @@
     {
       "notificationId": "NOT1001",
       "doctorId": "DOC1001",
-      "title": "🚨 Critical Triage Alert",
+      "title": "Critical Triage Alert",
       "message": "Patient under General Medicine requires immediate review (elevated biomarker trajectory).",
       "priority": "high",
       "isRead": false,
@@ -33065,7 +33065,7 @@
     {
       "notificationId": "NOT1002",
       "doctorId": "DOC1001",
-      "title": "⏰ Overdue Investigation Follow-up",
+      "title": "Overdue Investigation Follow-up",
       "message": "2 diagnostic orders pending completion in General Medicine.",
       "priority": "medium",
       "isRead": false,
@@ -33075,7 +33075,7 @@
     {
       "notificationId": "NOT1003",
       "doctorId": "DOC1001",
-      "title": "🏥 Clinical Shift Initialized",
+      "title": "Clinical Shift Initialized",
       "message": "Good Morning, Dr. Amit Sharma. Outpatient worklist queue synchronized with hospital EHR.",
       "priority": "low",
       "isRead": true,
@@ -33085,7 +33085,7 @@
     {
       "notificationId": "NOT1004",
       "doctorId": "DOC1002",
-      "title": "🚨 Critical Triage Alert",
+      "title": "Critical Triage Alert",
       "message": "Patient under Cardiology requires immediate review (elevated biomarker trajectory).",
       "priority": "high",
       "isRead": false,
@@ -33095,7 +33095,7 @@
     {
       "notificationId": "NOT1005",
       "doctorId": "DOC1002",
-      "title": "⏰ Overdue Investigation Follow-up",
+      "title": "Overdue Investigation Follow-up",
       "message": "2 diagnostic orders pending completion in Cardiology.",
       "priority": "medium",
       "isRead": false,
@@ -33105,7 +33105,7 @@
     {
       "notificationId": "NOT1006",
       "doctorId": "DOC1002",
-      "title": "🏥 Clinical Shift Initialized",
+      "title": "Clinical Shift Initialized",
       "message": "Good Morning, Dr. Sarah Chen, MD. Outpatient worklist queue synchronized with hospital EHR.",
       "priority": "low",
       "isRead": true,
@@ -33115,7 +33115,7 @@
     {
       "notificationId": "NOT1007",
       "doctorId": "DOC1003",
-      "title": "🚨 Critical Triage Alert",
+      "title": "Critical Triage Alert",
       "message": "Patient under Endocrinology & Diabetology requires immediate review (elevated biomarker trajectory).",
       "priority": "high",
       "isRead": false,
@@ -33125,7 +33125,7 @@
     {
       "notificationId": "NOT1008",
       "doctorId": "DOC1003",
-      "title": "⏰ Overdue Investigation Follow-up",
+      "title": "Overdue Investigation Follow-up",
       "message": "2 diagnostic orders pending completion in Endocrinology & Diabetology.",
       "priority": "medium",
       "isRead": false,
@@ -33135,7 +33135,7 @@
     {
       "notificationId": "NOT1009",
       "doctorId": "DOC1003",
-      "title": "🏥 Clinical Shift Initialized",
+      "title": "Clinical Shift Initialized",
       "message": "Good Morning, Dr. Rajesh Verma. Outpatient worklist queue synchronized with hospital EHR.",
       "priority": "low",
       "isRead": true,
@@ -33145,7 +33145,7 @@
     {
       "notificationId": "NOT1010",
       "doctorId": "DOC1004",
-      "title": "🚨 Critical Triage Alert",
+      "title": "Critical Triage Alert",
       "message": "Patient under Neurology & Stroke Center requires immediate review (elevated biomarker trajectory).",
       "priority": "high",
       "isRead": false,
@@ -33155,7 +33155,7 @@
     {
       "notificationId": "NOT1011",
       "doctorId": "DOC1004",
-      "title": "⏰ Overdue Investigation Follow-up",
+      "title": "Overdue Investigation Follow-up",
       "message": "2 diagnostic orders pending completion in Neurology & Stroke Center.",
       "priority": "medium",
       "isRead": false,
@@ -33165,7 +33165,7 @@
     {
       "notificationId": "NOT1012",
       "doctorId": "DOC1004",
-      "title": "🏥 Clinical Shift Initialized",
+      "title": "Clinical Shift Initialized",
       "message": "Good Morning, Dr. Ananya Iyer. Outpatient worklist queue synchronized with hospital EHR.",
       "priority": "low",
       "isRead": true,
@@ -33175,7 +33175,7 @@
     {
       "notificationId": "NOT1013",
       "doctorId": "DOC1005",
-      "title": "🚨 Critical Triage Alert",
+      "title": "Critical Triage Alert",
       "message": "Patient under Medical Oncology requires immediate review (elevated biomarker trajectory).",
       "priority": "high",
       "isRead": false,
@@ -33185,7 +33185,7 @@
     {
       "notificationId": "NOT1014",
       "doctorId": "DOC1005",
-      "title": "⏰ Overdue Investigation Follow-up",
+      "title": "Overdue Investigation Follow-up",
       "message": "2 diagnostic orders pending completion in Medical Oncology.",
       "priority": "medium",
       "isRead": false,
@@ -33195,7 +33195,7 @@
     {
       "notificationId": "NOT1015",
       "doctorId": "DOC1005",
-      "title": "🏥 Clinical Shift Initialized",
+      "title": "Clinical Shift Initialized",
       "message": "Good Morning, Dr. Michael Scott, MD. Outpatient worklist queue synchronized with hospital EHR.",
       "priority": "low",
       "isRead": true,
@@ -33205,7 +33205,7 @@
     {
       "notificationId": "NOT1016",
       "doctorId": "DOC1006",
-      "title": "🚨 Critical Triage Alert",
+      "title": "Critical Triage Alert",
       "message": "Patient under Nephrology & Renal Care requires immediate review (elevated biomarker trajectory).",
       "priority": "high",
       "isRead": false,
@@ -33215,7 +33215,7 @@
     {
       "notificationId": "NOT1017",
       "doctorId": "DOC1006",
-      "title": "⏰ Overdue Investigation Follow-up",
+      "title": "Overdue Investigation Follow-up",
       "message": "2 diagnostic orders pending completion in Nephrology & Renal Care.",
       "priority": "medium",
       "isRead": false,
@@ -33225,7 +33225,7 @@
     {
       "notificationId": "NOT1018",
       "doctorId": "DOC1006",
-      "title": "🏥 Clinical Shift Initialized",
+      "title": "Clinical Shift Initialized",
       "message": "Good Morning, Dr. Priya Nair. Outpatient worklist queue synchronized with hospital EHR.",
       "priority": "low",
       "isRead": true,
@@ -33235,7 +33235,7 @@
     {
       "notificationId": "NOT1019",
       "doctorId": "DOC1007",
-      "title": "🚨 Critical Triage Alert",
+      "title": "Critical Triage Alert",
       "message": "Patient under Pulmonology & Respiratory requires immediate review (elevated biomarker trajectory).",
       "priority": "high",
       "isRead": false,
@@ -33245,7 +33245,7 @@
     {
       "notificationId": "NOT1020",
       "doctorId": "DOC1007",
-      "title": "⏰ Overdue Investigation Follow-up",
+      "title": "Overdue Investigation Follow-up",
       "message": "2 diagnostic orders pending completion in Pulmonology & Respiratory.",
       "priority": "medium",
       "isRead": false,
@@ -33255,7 +33255,7 @@
     {
       "notificationId": "NOT1021",
       "doctorId": "DOC1007",
-      "title": "🏥 Clinical Shift Initialized",
+      "title": "Clinical Shift Initialized",
       "message": "Good Morning, Dr. Vikram Seth. Outpatient worklist queue synchronized with hospital EHR.",
       "priority": "low",
       "isRead": true,
@@ -33265,7 +33265,7 @@
     {
       "notificationId": "NOT1022",
       "doctorId": "DOC1008",
-      "title": "🚨 Critical Triage Alert",
+      "title": "Critical Triage Alert",
       "message": "Patient under Gastroenterology & Hepatology requires immediate review (elevated biomarker trajectory).",
       "priority": "high",
       "isRead": false,
@@ -33275,7 +33275,7 @@
     {
       "notificationId": "NOT1023",
       "doctorId": "DOC1008",
-      "title": "⏰ Overdue Investigation Follow-up",
+      "title": "Overdue Investigation Follow-up",
       "message": "2 diagnostic orders pending completion in Gastroenterology & Hepatology.",
       "priority": "medium",
       "isRead": false,
@@ -33285,7 +33285,7 @@
     {
       "notificationId": "NOT1024",
       "doctorId": "DOC1008",
-      "title": "🏥 Clinical Shift Initialized",
+      "title": "Clinical Shift Initialized",
       "message": "Good Morning, Dr. Emily Watson, MD. Outpatient worklist queue synchronized with hospital EHR.",
       "priority": "low",
       "isRead": true,
@@ -33295,7 +33295,7 @@
     {
       "notificationId": "NOT1025",
       "doctorId": "DOC1009",
-      "title": "🚨 Critical Triage Alert",
+      "title": "Critical Triage Alert",
       "message": "Patient under Orthopedics & Joint Care requires immediate review (elevated biomarker trajectory).",
       "priority": "high",
       "isRead": false,
@@ -33305,7 +33305,7 @@
     {
       "notificationId": "NOT1026",
       "doctorId": "DOC1009",
-      "title": "⏰ Overdue Investigation Follow-up",
+      "title": "Overdue Investigation Follow-up",
       "message": "2 diagnostic orders pending completion in Orthopedics & Joint Care.",
       "priority": "medium",
       "isRead": false,
@@ -33315,7 +33315,7 @@
     {
       "notificationId": "NOT1027",
       "doctorId": "DOC1009",
-      "title": "🏥 Clinical Shift Initialized",
+      "title": "Clinical Shift Initialized",
       "message": "Good Morning, Dr. David Miller. Outpatient worklist queue synchronized with hospital EHR.",
       "priority": "low",
       "isRead": true,
@@ -33325,7 +33325,7 @@
     {
       "notificationId": "NOT1028",
       "doctorId": "DOC1010",
-      "title": "🚨 Critical Triage Alert",
+      "title": "Critical Triage Alert",
       "message": "Patient under Pediatrics & Adolescent Care requires immediate review (elevated biomarker trajectory).",
       "priority": "high",
       "isRead": false,
@@ -33335,7 +33335,7 @@
     {
       "notificationId": "NOT1029",
       "doctorId": "DOC1010",
-      "title": "⏰ Overdue Investigation Follow-up",
+      "title": "Overdue Investigation Follow-up",
       "message": "2 diagnostic orders pending completion in Pediatrics & Adolescent Care.",
       "priority": "medium",
       "isRead": false,
@@ -33345,7 +33345,7 @@
     {
       "notificationId": "NOT1030",
       "doctorId": "DOC1010",
-      "title": "🏥 Clinical Shift Initialized",
+      "title": "Clinical Shift Initialized",
       "message": "Good Morning, Dr. Sunita Rao. Outpatient worklist queue synchronized with hospital EHR.",
       "priority": "low",
       "isRead": true,

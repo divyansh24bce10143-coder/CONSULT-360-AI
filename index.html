@@ -250,7 +250,6 @@
         </div>
 
         <div class="sidebar-search-box">
-          <span class="search-icon">🔍</span>
           <input type="text" id="sidebar-search-input" placeholder="Search patient or MRN..." oninput="filterPatients(this.value)">
         </div>
       </div>
@@ -267,7 +266,7 @@
 
       <div class="sidebar-footer-tools">
         <button class="btn-worklist-view" onclick="showDashboardView()">
-          <span>📊</span> Clinical Triage Dashboard
+          Clinical Triage Dashboard
         </button>
       </div>
     </aside>
@@ -295,7 +294,7 @@
           </div>
           <div class="dashboard-actions">
             <button class="btn-clinical-secondary" onclick="exportWorklistReport()">
-              <span>📥</span> Export Triage Summary
+              Export Triage Summary
             </button>
           </div>
         </div>
@@ -306,7 +305,6 @@
           <div class="kpi-card kpi-critical" onclick="filterDashboardTable('critical')">
             <div class="kpi-top">
               <span class="kpi-label">Critical Attention Required</span>
-              <span class="kpi-icon">🚨</span>
             </div>
             <div class="kpi-value" id="kpi-critical-count">1</div>
             <div class="kpi-desc">Acute glycemic failure &amp; renal decline</div>
@@ -315,7 +313,6 @@
           <div class="kpi-card kpi-warning" onclick="filterDashboardTable('overdue')">
             <div class="kpi-top">
               <span class="kpi-label">Overdue Follow-ups</span>
-              <span class="kpi-icon">⏰</span>
             </div>
             <div class="kpi-value" id="kpi-overdue-count">2</div>
             <div class="kpi-desc">Missed appointments &amp; review intervals</div>
@@ -324,7 +321,6 @@
           <div class="kpi-card kpi-investigation" onclick="filterDashboardTable('pending-tests')">
             <div class="kpi-top">
               <span class="kpi-label">Pending Investigations</span>
-              <span class="kpi-icon">🔬</span>
             </div>
             <div class="kpi-value" id="kpi-pending-count">6</div>
             <div class="kpi-desc">Overdue eGFR, Echocardiogram, Spirometry</div>
@@ -333,7 +329,6 @@
           <div class="kpi-card kpi-neutral" onclick="filterDashboardTable('all')">
             <div class="kpi-top">
               <span class="kpi-label">Total Outpatients Today</span>
-              <span class="kpi-icon">📋</span>
             </div>
             <div class="kpi-value" id="kpi-total-count">3</div>
             <div class="kpi-desc">Active ambulatory clinic volume</div>
@@ -350,9 +345,9 @@
             <div class="table-controls">
               <div class="table-filter-pills">
                 <button class="pill-btn active" onclick="setTableFilter('all', this)">All Patients</button>
-                <button class="pill-btn" onclick="setTableFilter('critical', this)">🚨 Critical Attention</button>
-                <button class="pill-btn" onclick="setTableFilter('overdue', this)">⏰ Overdue Follow-ups</button>
-                <button class="pill-btn" onclick="setTableFilter('pending-tests', this)">🔬 Pending Labs</button>
+                <button class="pill-btn" onclick="setTableFilter('critical', this)">Critical Attention</button>
+                <button class="pill-btn" onclick="setTableFilter('overdue', this)">Overdue Follow-ups</button>
+                <button class="pill-btn" onclick="setTableFilter('pending-tests', this)">Pending Labs</button>
               </div>
             </div>
           </div>
@@ -380,7 +375,6 @@
 
         <!-- Clinical Disclaimer Footer -->
         <div class="clinical-disclaimer-box">
-          <div class="disclaimer-icon">ℹ️</div>
           <div class="disclaimer-text">
             <strong>Clinical Decision Support Protocol Notice:</strong> Consult 360 AI synthesizes multi-source EHR records, diagnostic labs, and medical imaging into pre-consultation briefs. AI inferences and care journey recommendations must always be verified and approved by the attending clinician before prescribing or modifying care plans.
           </div>
@@ -407,27 +401,20 @@
                 <span class="triage-status-tag" id="hdr-risk">Critical Attention</span>
               </div>
               <div class="patient-meta-row" id="hdr-meta">
-                58y · Male · Blood Group B+ · 🕐 10:30 AM (Today) · Room 4B · Attending: Dr. Sarah Chen, MD
+                58y · Male · Blood Group B+ · 10:30 AM (Today) · Room 4B · Attending: Dr. Sarah Chen, MD
               </div>
             </div>
           </div>
 
           <div class="patient-identity-right">
-            <!-- Fast Patient Queue Switcher -->
-            <div class="patient-queue-nav" title="Navigate through today's patient queue">
-              <button class="btn-queue-prev" onclick="navigatePatientQueue(-1)" title="Previous patient (Hotkey: [ )">◀</button>
-              <span class="queue-nav-text" id="queue-position-indicator">1 of 3</span>
-              <button class="btn-queue-next" onclick="navigatePatientQueue(1)" title="Next patient (Hotkey: ] )">▶</button>
-            </div>
-
             <button class="btn-clinical-secondary" id="btn-view-chart-records" onclick="openChartRecordsModal()" title="View active encounter chart orders and signed directives">
-              <span>📋</span> Chart Records <span class="tab-counter-badge" id="chart-records-counter" style="background-color:var(--clinical-blue)">0</span>
+              Chart Records <span class="tab-counter-badge" id="chart-records-counter" style="background-color:var(--clinical-blue)">0</span>
             </button>
             <button class="btn-clinical-outline" onclick="printPatientBrief()" title="Print medical chart brief">
-              <span>🖨️</span> Print Brief
+              Print Brief
             </button>
             <button class="btn-clinical-danger-outline" id="btn-patient-delete" onclick="handlePatientDeleteFromDetail()" title="Discharge / Remove record">
-              <span>✕</span> Discharge
+              Discharge
             </button>
           </div>
         </div>
@@ -435,7 +422,6 @@
 
         <!-- Prominent Allergy & Critical Precautions Alert Banner -->
         <div class="clinical-allergy-banner" id="hdr-allergy-banner">
-          <span class="allergy-icon">⚠️</span>
           <div class="allergy-content">
             <strong>DOCUMENTED ALLERGIES &amp; CONTRAINDICATIONS:</strong>
             <span id="hdr-allergy-text">Penicillin (Severe cutaneous reaction / rash)</span>
@@ -473,37 +459,30 @@
           </div>
           <div id="pipeline" class="pipeline-track">
             <div class="pipe-node" id="pipe-pdf">
-              <div class="pipe-node-icon">📄</div>
               <div class="pipe-node-name">1. Ingestion</div>
             </div>
             <div class="pipe-connector"></div>
             <div class="pipe-node" id="pipe-ocr">
-              <div class="pipe-node-icon">👁️</div>
               <div class="pipe-node-name">2. Vision OCR</div>
             </div>
             <div class="pipe-connector"></div>
             <div class="pipe-node" id="pipe-entities">
-              <div class="pipe-node-icon">🧬</div>
               <div class="pipe-node-name">3. Entity NER</div>
             </div>
             <div class="pipe-connector"></div>
             <div class="pipe-node" id="pipe-timeline">
-              <div class="pipe-node-icon">📅</div>
               <div class="pipe-node-name">4. Timeline</div>
             </div>
             <div class="pipe-connector"></div>
             <div class="pipe-node" id="pipe-changes">
-              <div class="pipe-node-icon">📊</div>
               <div class="pipe-node-name">5. Delta (Δ)</div>
             </div>
             <div class="pipe-connector"></div>
             <div class="pipe-node" id="pipe-risk">
-              <div class="pipe-node-icon">🚨</div>
               <div class="pipe-node-name">6. Risk Audit</div>
             </div>
             <div class="pipe-connector"></div>
             <div class="pipe-node" id="pipe-gemini">
-              <div class="pipe-node-icon">✨</div>
               <div class="pipe-node-name">7. Clinical Brief</div>
             </div>
           </div>
@@ -515,20 +494,20 @@
         <!-- ── CLINICAL INTELLIGENCE TABS NAVIGATION ─────────────────────── -->
         <div class="clinical-tabs-nav" id="tab-nav">
           <button class="clinical-tab-btn active" data-tab="overview" onclick="switchTab('overview', this)">
-            <span class="tab-icon">📋</span> Clinical Overview &amp; AI Brief
+            Clinical Overview &amp; AI Brief
           </button>
           <button class="clinical-tab-btn" data-tab="timeline" onclick="switchTab('timeline', this)">
-            <span class="tab-icon">🗺️</span> Care Journey &amp; Timeline
+            Care Journey &amp; Timeline
           </button>
           <button class="clinical-tab-btn" data-tab="changes" onclick="switchTab('changes', this)">
-            <span class="tab-icon">📊</span> Metric Trends &amp; Delta (Δ)
+            Metric Trends &amp; Delta (Δ)
           </button>
           <button class="clinical-tab-btn" data-tab="risk" onclick="switchTab('risk', this)">
-            <span class="tab-icon">🚨</span> Explainable AI Risk Assessment
+            Explainable AI Risk Assessment
             <span class="tab-counter-badge" id="tab-badge-risk">4</span>
           </button>
           <button class="clinical-tab-btn" data-tab="missing" onclick="switchTab('missing', this)">
-            <span class="tab-icon">🔬</span> Pending Investigations Radar
+            Pending Investigations Radar
             <span class="tab-counter-badge" id="tab-badge-missing">5</span>
           </button>
         </div>
@@ -561,14 +540,13 @@
 
       <!-- Drag & Drop Zone -->
       <div class="clinical-upload-zone" id="upload-area">
-        <div class="upload-zone-icon">📥</div>
         <div class="upload-zone-prompt">Drag and drop patient files here, or <span class="browse-link">browse local files</span></div>
         <div class="supported-formats-pills">
-          <span class="format-pill">📄 Digital / Scanned PDFs</span>
-          <span class="format-pill">🫀 ECG / EKG Waveforms</span>
-          <span class="format-pill">🫀 2D Echocardiograms</span>
-          <span class="format-pill">🫁 Chest Radiographs / X-Rays</span>
-          <span class="format-pill">📝 Handwritten Prescriptions</span>
+          <span class="format-pill">Digital / Scanned PDFs</span>
+          <span class="format-pill">ECG / EKG Waveforms</span>
+          <span class="format-pill">2D Echocardiograms</span>
+          <span class="format-pill">Chest Radiographs / X-Rays</span>
+          <span class="format-pill">Handwritten Prescriptions</span>
         </div>
         <input type="file" id="file-input" accept=".pdf,.txt,.jpg,.jpeg,.png,.webp" multiple hidden>
         <button class="btn-clinical-secondary" onclick="document.getElementById('file-input').click()">
@@ -589,7 +567,7 @@
             ＋ Add more files
           </button>
           <button class="btn-clinical-primary" id="btn-analyze" onclick="startAnalysis()" style="flex:1">
-            🚀 Ingest &amp; Synthesize Brief
+            Ingest &amp; Synthesize Brief
           </button>
         </div>
       </div>
@@ -605,7 +583,7 @@
     <div class="clinical-modal-dialog" style="max-width: 680px;">
       <div class="modal-header-bar">
         <div class="modal-title-group">
-          <h3 class="modal-heading">📋 Patient Chart Orders &amp; Encounter Directives</h3>
+          <h3 class="modal-heading">Patient Chart Orders &amp; Encounter Directives</h3>
           <p class="modal-subheading" id="chart-modal-patient-subtitle">Active encounter orders, completed care directives, and specialist referrals.</p>
         </div>
         <button class="modal-close-btn" onclick="closeChartRecordsModal()">✕</button>
@@ -617,11 +595,11 @@
 
       <div class="modal-actions-footer" style="justify-content: space-between;">
         <button class="btn-clinical-outline" onclick="copyChartRecordText()">
-          <span>📋</span> Copy to Clipboard (EHR)
+          Copy to Clipboard (EHR)
         </button>
         <div style="display:flex;gap:8px">
           <button class="btn-clinical-outline" onclick="printPatientBrief()">
-            <span>🖨️</span> Print Order Sheet
+            Print Order Sheet
           </button>
           <button class="btn-clinical-primary" onclick="closeChartRecordsModal()">
             Done &amp; Close
@@ -638,7 +616,7 @@
     <div class="clinical-modal-dialog" style="max-width: 520px;">
       <div class="modal-header-bar">
         <div class="modal-title-group">
-          <h3 class="modal-heading">⌨️ Clinical Keyboard Shortcuts</h3>
+          <h3 class="modal-heading">Clinical Keyboard Shortcuts</h3>
           <p class="modal-subheading">Power workflows for rapid chart review &amp; encounter orders.</p>
         </div>
         <button class="modal-close-btn" onclick="closeHotkeysModal()">✕</button>
@@ -700,7 +678,6 @@
     <div class="clinical-modal-card notif-modal-card">
       <div class="modal-header-clinical">
         <div class="modal-title-group">
-          <div class="modal-icon-badge notif-badge-icon">🔔</div>
           <div>
             <h3 class="modal-title-text">Clinical Notifications &amp; Alerts</h3>
             <p class="modal-subtitle-text">Real-time hospital alerts, critical risk warnings, and overdue investigations.</p>
@@ -715,7 +692,7 @@
 
       <div class="modal-actions-footer">
         <button class="btn-clinical-ghost" onclick="markAllNotificationsRead()">
-          ✓ Mark All as Read
+          Mark All as Read
         </button>
         <button class="btn-clinical-primary" onclick="closeNotificationsModal()">
           Close

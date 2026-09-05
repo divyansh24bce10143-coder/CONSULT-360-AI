@@ -175,16 +175,16 @@ async function extractTextFromImage(buffer, filename, mimeType) {
 // ── Display Label Helper ───────────────────────────────────────────────────
 function getImageTypeLabel(imageType) {
   const labels = {
-    ecg:          '🫀 ECG Waveform Analysis',
-    echo:         '🫀 2D Echocardiogram Report',
-    xray:         '🫁 Chest Radiograph / X-Ray',
-    prescription: '💊 Clinical Prescription & Notes',
-    scan:         '🧠 MRI / CT Imaging',
-    lab:          '🧪 Laboratory Pathology Extract',
-    handwritten:  '📝 Handwritten Doctor Notes',
-    general:      '📋 Medical Document'
+    ecg:          'ECG Waveform Analysis',
+    echo:         '2D Echocardiogram Report',
+    xray:         'Chest Radiograph / X-Ray',
+    prescription: 'Clinical Prescription & Notes',
+    scan:         'MRI / CT Imaging',
+    lab:          'Laboratory Pathology Extract',
+    handwritten:  'Handwritten Doctor Notes',
+    general:      'Medical Document'
   };
-  return labels[imageType] || '📋 Medical Document';
+  return labels[imageType] || 'Medical Document';
 }
 
 module.exports = { extractTextFromImage, detectImageType, getImageTypeLabel };

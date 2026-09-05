@@ -98,20 +98,20 @@ if (!process.env.VERCEL) {
   app.listen(PORT, () => {
     const apiKey = process.env.GEMINI_API_KEY;
     const keyStatus = apiKey && apiKey !== 'your_gemini_api_key_here'
-      ? '✅ Connected'
-      : '❌ Missing — add GEMINI_API_KEY to server/.env';
+      ? '[Connected]'
+      : '[Missing — add GEMINI_API_KEY to server/.env]';
 
     console.log('');
     console.log('╔═══════════════════════════════════════════════════════════╗');
-    console.log('║     🏥  Consult 360 AI — Hospital Information System      ║');
+    console.log('║        Consult 360 AI — Hospital Information System       ║');
     console.log('╚═══════════════════════════════════════════════════════════╝');
-    console.log(`  🌐 App Gateway   : http://localhost:${PORT}`);
-    console.log(`  📡 REST API Base : http://localhost:${PORT}/api`);
-    console.log(`  🔑 Gemini Model  : gemini-3.6-flash (${keyStatus})`);
-    console.log(`  👥 Active Staff  : ${db.data.doctors.length} Doctors`);
-    console.log(`  📋 Patients DB   : ${db.data.patients.length} Outpatients`);
-    console.log(`  📅 Appointments  : ${db.data.appointments.length} Records`);
-    console.log(`  🔬 Investigations: ${db.data.investigations.length} Diagnostic Orders`);
+    console.log(`  App Gateway   : http://localhost:${PORT}`);
+    console.log(`  REST API Base : http://localhost:${PORT}/api`);
+    console.log(`  Gemini Model  : gemini-3.6-flash ${keyStatus}`);
+    console.log(`  Active Staff  : ${db.data.doctors.length} Doctors`);
+    console.log(`  Patients DB   : ${db.data.patients.length} Outpatients`);
+    console.log(`  Appointments  : ${db.data.appointments.length} Records`);
+    console.log(`  Investigations: ${db.data.investigations.length} Diagnostic Orders`);
     console.log('');
   });
 }
