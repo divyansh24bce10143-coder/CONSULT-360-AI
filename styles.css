@@ -233,38 +233,58 @@ body.clinical-theme {
 .clinician-profile {
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding-left: 8px;
+  gap: 10px;
+  padding: 3px 10px;
   border-left: 1px solid rgba(255, 255, 255, 0.15);
+  background-color: rgba(255, 255, 255, 0.03);
+  border-radius: var(--radius-md);
+  height: 42px;
 }
 
 .clinician-avatar {
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   background-color: #0284c7;
-  color: white;
+  color: #ffffff;
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 700;
+  flex-shrink: 0;
 }
 
 .clinician-info {
   display: flex;
   flex-direction: column;
+  justify-content: center;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.clinician-salutation-line {
+  font-size: 9.5px;
+  font-weight: 500;
+  color: #94a3b8;
+  line-height: 1.1;
+  white-space: nowrap;
 }
 
 .clinician-name {
   font-size: 12px;
   font-weight: 600;
   color: #f1f5f9;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 .clinician-role {
   font-size: 10px;
-  color: #94a3b8;
+  color: #38bdf8;
+  font-weight: 500;
+  line-height: 1.1;
+  white-space: nowrap;
 }
 
 /* ── Buttons (Clinical Grade) ─────────────────────────────────────────────── */

@@ -111,7 +111,7 @@ function updateClinicianGreeting() {
 
   if (salutationEl) salutationEl.textContent = getSalutation();
   if (nameEl) nameEl.textContent = state.doctor.name || 'Dr. Amit Sharma';
-  if (deptEl) deptEl.innerHTML = `${state.doctor.department || 'General Medicine'} · <span style="color:var(--deep-teal);font-weight:700">Sign Out</span>`;
+  if (deptEl) deptEl.textContent = `${state.doctor.department || 'General Medicine'} · Attending`;
   if (avatarEl) avatarEl.textContent = state.doctor.avatar || (state.doctor.name ? state.doctor.name.replace(/Dr\.\s*/i, '').substring(0, 2).toUpperCase() : 'AS');
 }
 
