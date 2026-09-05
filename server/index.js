@@ -4,11 +4,20 @@
    Follow-ups, Notifications, Dashboard Metrics, and Multimodal AI decision support.
    ========================================================================== */
 
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 require('dotenv').config();
+
+process.on('uncaughtException', (err) => {
+  console.error('[UncaughtException]', err);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('[UnhandledRejection]', reason);
+});
 
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
 
 const authRoutes = require('./routes/authRoutes');
 const patientRoutes = require('./routes/patientRoutes');

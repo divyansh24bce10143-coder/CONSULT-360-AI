@@ -47,11 +47,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ── Hospital Clinical Authentication Gateway ───────────────────────────────
 function initAuthGateway() {
   state.authenticated = false;
+  state.currentPatientId = null;
+  state.currentView = 'dashboard';
 
   const authScreen = document.getElementById('auth-screen');
   const appWorkspace = document.getElementById('app-workspace');
   const authForm = document.getElementById('auth-form');
   const loadingState = document.getElementById('auth-loading-state');
+  const dashboardView = document.getElementById('dashboard-view');
+  const patientView = document.getElementById('patient-view');
+
+  // Reset internal views so it always opens to the triage dashboard
+  if (dashboardView) dashboardView.classList.remove('hidden');
+  if (patientView) patientView.classList.add('hidden');
+  document.querySelectorAll('.patient-item-card').forEach(el => el.classList.remove('active'));
 
   // Always display login screen on page open
   if (authScreen) authScreen.classList.remove('hidden');
@@ -199,6 +208,8 @@ async function handleAuthSubmit(event) {
   if (authScreen) authScreen.classList.add('hidden');
   if (appWorkspace) appWorkspace.classList.remove('hidden');
 
+  // Always reset view to triage dashboard worklist on login
+  showDashboardView();
   updateClinicianGreeting();
   await loadHospitalData();
   showToast(`✓ ${getSalutation()} ${state.doctor.name} (${state.doctor.department})`);
@@ -224,12 +235,21 @@ function handleSignOut() {
   if (!confirmed) return;
 
   state.authenticated = false;
+  state.currentPatientId = null;
+  state.currentView = 'dashboard';
   sessionStorage.removeItem('consult360_auth');
   sessionStorage.removeItem('consult360_token');
   sessionStorage.removeItem('consult360_doctor');
   localStorage.removeItem('consult360_auth');
   localStorage.removeItem('consult360_token');
   localStorage.removeItem('consult360_doctor');
+
+  // Reset internal view containers so next login opens on triage dashboard
+  const dashboardView = document.getElementById('dashboard-view');
+  const patientView = document.getElementById('patient-view');
+  if (dashboardView) dashboardView.classList.remove('hidden');
+  if (patientView) patientView.classList.add('hidden');
+  document.querySelectorAll('.patient-item-card').forEach(el => el.classList.remove('active'));
 
   const authScreen = document.getElementById('auth-screen');
   const appWorkspace = document.getElementById('app-workspace');

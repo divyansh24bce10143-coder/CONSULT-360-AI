@@ -231,11 +231,11 @@
           </div>
         </div>
 
-        <button class="btn-clinical-ghost" onclick="handleSignOut()" title="Sign out to hospital login gateway" style="padding:6px 10px">
-          <span>🚪</span> Sign Out
+        <button class="btn-clinical-ghost" onclick="handleSignOut()" title="Sign out to hospital login gateway" style="padding:6px 12px">
+          Sign Out
         </button>
 
-        <button class="btn-clinical-primary" onclick="showUploadModal()">
+        <button class="btn-clinical-primary" onclick="showUploadModal()" title="Ingest & analyze new multi-source patient records">
           <span class="btn-icon">＋</span> Ingest Patient Records
         </button>
       </div>
@@ -306,9 +306,6 @@
           <div class="dashboard-actions">
             <button class="btn-clinical-secondary" onclick="exportWorklistReport()">
               <span>📥</span> Export Triage Summary
-            </button>
-            <button class="btn-clinical-primary" onclick="showUploadModal()">
-              <span>＋</span> Ingest New Patient
             </button>
           </div>
         </div>
@@ -435,9 +432,6 @@
 
             <button class="btn-clinical-secondary" id="btn-view-chart-records" onclick="openChartRecordsModal()" title="View active encounter chart orders and signed directives">
               <span>📋</span> Chart Records <span class="tab-counter-badge" id="chart-records-counter" style="background-color:var(--clinical-blue)">0</span>
-            </button>
-            <button class="btn-clinical-outline" onclick="showUploadModal()" title="Add PDF, ECG, Echo or Prescriptions">
-              <span>📤</span> Ingest Addendum
             </button>
             <button class="btn-clinical-outline" onclick="printPatientBrief()" title="Print medical chart brief">
               <span>🖨️</span> Print Brief
