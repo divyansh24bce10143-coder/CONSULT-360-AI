@@ -190,25 +190,14 @@
         <div class="hospital-brand">
           <div class="hospital-crest">⚕</div>
           <div class="hospital-identity">
-            <div class="app-title">Consult<span class="brand-num">360</span> <span class="badge-clinical">CLINICAL AI</span></div>
+            <div class="app-title">Consult<span class="brand-num">360</span></div>
             <div class="hospital-dept">Ambulatory Cardiology &amp; Endocrinology · St. Jude Medical Center</div>
           </div>
         </div>
       </div>
-
-      <div class="topbar-center">
-        <div class="triage-status-pill" id="global-triage-indicator" onclick="showDashboardView()" title="Click to view full worklist">
-          <span class="pulse-indicator"></span>
-          <span id="triage-quick-stats"><strong>3 Patients</strong> Active in Worklist · <strong>2 Critical Care Gaps</strong></span>
-        </div>
-      </div>
+ 
 
       <div class="topbar-right">
-        <div class="system-health-badge" id="api-status">
-          <span class="status-dot" id="status-dot"></span>
-          <span id="status-text">Checking Clinical Engine...</span>
-        </div>
-
         <!-- Clinician Profile with Dynamic Greeting -->
         <div class="clinician-profile-container">
           <div class="clinician-profile" title="Attending Clinician Profile">
@@ -229,10 +218,6 @@
             <span class="menu-bar"></span>
           </button>
           <div class="topbar-menu-dropdown hidden" id="topbar-menu-dropdown">
-            <button class="menu-dropdown-item" onclick="handleMenuSearchPatient(event)">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <span>Search Patient</span>
-            </button>
             <button class="menu-dropdown-item" onclick="handleMenuIngestPatient(event)">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
               <span>Ingest Patient Record</span>
