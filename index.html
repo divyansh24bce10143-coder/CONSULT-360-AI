@@ -509,6 +509,47 @@
   </div>
 
   <!-- ════════════════════════════════════════════════════════════════════════
+       SEARCH PATIENT DIALOG MODAL
+       ════════════════════════════════════════════════════════════════════════ -->
+  <div id="patient-search-modal" class="modal-overlay hidden" onclick="handleSearchModalBackdropClick(event)">
+    <div class="clinical-modal-dialog patient-search-dialog" onclick="event.stopPropagation()">
+      <div class="modal-header-bar">
+        <div class="modal-title-group">
+          <h3 class="modal-heading">Search Hospital Patients</h3>
+          <p class="modal-subheading">Find and open any patient's 60-second clinical brief by name, MRN, condition, or doctor.</p>
+        </div>
+        <button class="modal-close-btn" onclick="closePatientSearchModal()">✕</button>
+      </div>
+
+      <div class="patient-search-dialog-body">
+        <div class="dialog-search-input-wrapper">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dialog-search-icon"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="modal-patient-search-input" class="dialog-search-input" placeholder="Type patient name, MRN, condition, or doctor..." oninput="handleModalPatientSearch(this.value)">
+          <button class="dialog-search-clear hidden" id="modal-patient-search-clear" onclick="clearModalPatientSearch()" title="Clear search">✕</button>
+        </div>
+
+        <div class="dialog-filter-pills-row">
+          <button class="pill-btn active" id="modal-filter-all" onclick="setModalSearchFilter('all', this)">All Patients</button>
+          <button class="pill-btn" id="modal-filter-critical" onclick="setModalSearchFilter('critical', this)">Critical Attention</button>
+          <button class="pill-btn" id="modal-filter-medium" onclick="setModalSearchFilter('medium', this)">Needs Review</button>
+          <button class="pill-btn" id="modal-filter-routine" onclick="setModalSearchFilter('routine', this)">Routine Care</button>
+        </div>
+
+        <div class="modal-search-results-container" id="modal-search-results">
+          <!-- Rendered dynamically by app.js -->
+        </div>
+      </div>
+
+      <div class="modal-actions-footer" style="justify-content: space-between;">
+        <span class="dialog-footer-hint">Press <kbd class="shortcut-key" style="font-size:10px">Esc</kbd> to close</span>
+        <button class="btn-clinical-secondary" onclick="closePatientSearchModal()">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════════════
        UPLOAD & MULTI-SOURCE INGESTION MODAL
        ════════════════════════════════════════════════════════════════════════ -->
   <div id="upload-modal" class="modal-overlay hidden">

@@ -295,15 +295,7 @@ function closeTopbarMenu() {
 function handleMenuSearchPatient(event) {
   event?.stopPropagation();
   closeTopbarMenu();
-  showDashboardView();
-  setTimeout(() => {
-    const input = document.getElementById('sidebar-search-input') || document.getElementById('table-search-input');
-    if (input) {
-      input.focus();
-      input.select?.();
-      input.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-  }, 100);
+  openPatientSearchModal();
 }
 
 function handleMenuIngestPatient(event) {
@@ -324,6 +316,145 @@ window.addEventListener('click', (e) => {
     closeTopbarMenu();
   }
 });
+
+// ── Search Patient Dialog Modal Management ─────────────────────────────────
+state.modalSearchQuery = '';
+state.modalSearchFilter = 'all';
+
+function openPatientSearchModal() {
+  const modal = document.getElementById('patient-search-modal');
+  const input = document.getElementById('modal-patient-search-input');
+  const clearBtn = document.getElementById('modal-patient-search-clear');
+  if (!modal) return;
+
+  state.modalSearchQuery = '';
+  state.modalSearchFilter = 'all';
+
+  if (input) input.value = '';
+  if (clearBtn) clearBtn.classList.add('hidden');
+
+  // Reset filter pills in modal
+  document.querySelectorAll('#patient-search-modal .pill-btn').forEach(b => {
+    b.classList.toggle('active', b.id === 'modal-filter-all');
+  });
+
+  modal.classList.remove('hidden');
+  renderModalSearchResults();
+
+  setTimeout(() => {
+    input?.focus();
+    input?.select?.();
+  }, 60);
+}
+
+function closePatientSearchModal() {
+  const modal = document.getElementById('patient-search-modal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function handleSearchModalBackdropClick(event) {
+  if (event.target.id === 'patient-search-modal') {
+    closePatientSearchModal();
+  }
+}
+
+function handleModalPatientSearch(query) {
+  state.modalSearchQuery = (query || '').trim();
+  const clearBtn = document.getElementById('modal-patient-search-clear');
+  if (clearBtn) {
+    clearBtn.classList.toggle('hidden', !state.modalSearchQuery);
+  }
+  renderModalSearchResults();
+}
+
+function clearModalPatientSearch() {
+  state.modalSearchQuery = '';
+  const input = document.getElementById('modal-patient-search-input');
+  const clearBtn = document.getElementById('modal-patient-search-clear');
+  if (input) {
+    input.value = '';
+    input.focus();
+  }
+  if (clearBtn) clearBtn.classList.add('hidden');
+  renderModalSearchResults();
+}
+
+function setModalSearchFilter(filterType, btn) {
+  state.modalSearchFilter = filterType;
+  document.querySelectorAll('#patient-search-modal .pill-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderModalSearchResults();
+}
+
+function renderModalSearchResults() {
+  const container = document.getElementById('modal-search-results');
+  if (!container) return;
+
+  const allPatients = state.patients || [];
+  let list = [...allPatients];
+
+  // Apply search query filter
+  if (state.modalSearchQuery) {
+    const q = state.modalSearchQuery.toLowerCase();
+    list = list.filter(p =>
+      (p.name && p.name.toLowerCase().includes(q)) ||
+      (p.mrn && p.mrn.toLowerCase().includes(q)) ||
+      (p.condition && p.condition.toLowerCase().includes(q)) ||
+      (p.attendingDoctor && p.attendingDoctor.toLowerCase().includes(q)) ||
+      (p.department && p.department.toLowerCase().includes(q)) ||
+      (p.id && p.id.toLowerCase().includes(q))
+    );
+  }
+
+  // Apply modal risk filter
+  if (state.modalSearchFilter === 'critical') {
+    list = list.filter(p => p.riskLevel === 'critical');
+  } else if (state.modalSearchFilter === 'medium') {
+    list = list.filter(p => p.riskLevel === 'medium');
+  } else if (state.modalSearchFilter === 'routine') {
+    list = list.filter(p => p.riskLevel === 'low' || p.riskLevel === 'routine');
+  }
+
+  if (list.length === 0) {
+    container.innerHTML = `
+      <div style="text-align:center;padding:36px 16px;color:var(--text-muted)">
+        <div style="font-size:14px;font-weight:600;color:var(--navy-800);margin-bottom:4px">No matching hospital patients found</div>
+        <div style="font-size:12px">Try searching by a different name, MRN, diagnosis, or clinical department.</div>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = list.slice(0, 30).map(p => `
+    <div class="dialog-patient-card" onclick="selectPatientAndCloseModal('${p.id}')">
+      <div class="dialog-patient-left">
+        <div class="dialog-patient-avatar">${p.avatar || (p.name || 'PT').substring(0, 2).toUpperCase()}</div>
+        <div class="dialog-patient-info">
+          <div class="dialog-patient-name-row">
+            <span class="dialog-patient-name">${p.name}</span>
+            <span class="dialog-patient-meta">${p.mrn || p.id} · ${p.age}y/${(p.gender || 'U')[0]} · ${p.bloodGroup || '—'}</span>
+          </div>
+          <div class="dialog-patient-condition">${p.condition || 'General Outpatient Care'}</div>
+        </div>
+      </div>
+      <div class="dialog-patient-right">
+        <span class="triage-badge risk-${p.riskLevel || 'medium'}">
+          ${p.riskLevel === 'critical' ? 'Critical' : p.riskLevel === 'medium' ? 'Attention' : 'Routine'}
+        </span>
+        <span style="font-size:10.5px;color:var(--text-muted)">${p.attendingDoctor ? p.attendingDoctor.split(',')[0] : 'Attending MD'}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function selectPatientAndCloseModal(id) {
+  closePatientSearchModal();
+  selectPatient(id);
+  const patient = state.patients?.find(p => p.id === id);
+  if (patient) {
+    showToast(`Opened Clinical Brief for ${patient.name}`);
+  }
+}
 
 // ── Hospital Information System Data Fetching ──────────────────────────────
 async function loadHospitalData() {
