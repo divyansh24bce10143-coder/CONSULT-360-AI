@@ -536,8 +536,17 @@ function renderDashboardWorklist() {
     quickStats.innerHTML = `<strong>${scopedPatients.length} ${state.scopeMode === 'my' ? 'Assigned' : 'Hospital'} Patients</strong> · <strong>${criticalCount} Critical</strong> · <strong>${pendingCount} Pending Labs</strong>`;
   }
 
-  // Filter patients for the dashboard table (triage tab)
+  // Filter patients for the dashboard table (triage tab + search query)
   const filtered = scopedPatients.filter(p => {
+    if (state.searchQuery) {
+      const q = state.searchQuery.toLowerCase();
+      const match = (p.name && p.name.toLowerCase().includes(q)) ||
+                    (p.mrn && p.mrn.toLowerCase().includes(q)) ||
+                    (p.condition && p.condition.toLowerCase().includes(q)) ||
+                    (p.attendingDoctor && p.attendingDoctor.toLowerCase().includes(q)) ||
+                    (p.id && p.id.toLowerCase().includes(q));
+      if (!match) return false;
+    }
     if (state.dashboardFilter === 'critical') return p.riskLevel === 'critical';
     if (state.dashboardFilter === 'overdue') return p.careJourney?.some(j => j.status === 'missed' || j.status === 'attention');
     if (state.dashboardFilter === 'pending-tests') {
@@ -691,6 +700,7 @@ function renderSidebarQueue() {
 
 function filterPatients(query) {
   state.searchQuery = query.trim();
+  renderDashboardWorklist();
   renderSidebarQueue();
 }
 

@@ -250,43 +250,6 @@
     <!-- ── APP LAYOUT SHELL ───────────────────────────────────────────── -->
     <div id="clinical-app-shell">
 
-
-    <!-- ── SIDEBAR WORKLIST QUEUE ────────────────────────────────────────── -->
-    <aside id="clinical-sidebar">
-      <div class="sidebar-header">
-        <div class="sidebar-title-row">
-          <span class="sidebar-heading">Patients</span>
-          <span class="patient-count-badge" id="sidebar-patient-count">10</span>
-        </div>
-
-        <!-- Doctor Scope Toggle -->
-        <div class="sidebar-scope-toggle">
-          <button class="scope-pill-btn active" id="sidebar-scope-my" onclick="setScopeMode('my')">My Assigned (<span id="my-patients-count">10</span>)</button>
-          <button class="scope-pill-btn" id="sidebar-scope-all" onclick="setScopeMode('all')">All Hospital (100)</button>
-        </div>
-
-        <div class="sidebar-search-box">
-          <input type="text" id="sidebar-search-input" placeholder="Search patient or MRN..." oninput="filterPatients(this.value)">
-        </div>
-      </div>
-
-      <div class="sidebar-triage-filter">
-        <button class="triage-tab active" data-filter="all" onclick="setSidebarFilter('all', this)">All</button>
-        <button class="triage-tab" data-filter="critical" onclick="setSidebarFilter('critical', this)">Critical</button>
-        <button class="triage-tab" data-filter="attention" onclick="setSidebarFilter('attention', this)">Needs Review</button>
-      </div>
-
-      <div id="patient-list" class="patient-worklist-scroll">
-        <!-- Rendered by app.js -->
-      </div>
-
-      <div class="sidebar-footer-tools">
-        <button class="btn-worklist-view" onclick="showDashboardView()">
-          Clinical Triage Dashboard
-        </button>
-      </div>
-    </aside>
-
     <!-- ── MAIN CLINICAL WORKSPACE ───────────────────────────────────────── -->
     <main id="clinical-main-viewport">
 
@@ -359,6 +322,10 @@
               <span class="table-badge" id="table-filter-label">All Active Records</span>
             </div>
             <div class="table-controls">
+              <div class="table-search-wrapper">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="search-icon"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" id="table-search-input" class="table-search-input" placeholder="Search by name, MRN, condition..." oninput="filterPatients(this.value)">
+              </div>
               <div class="table-filter-pills">
                 <button class="pill-btn active" onclick="setTableFilter('all', this)">All Patients</button>
                 <button class="pill-btn" onclick="setTableFilter('critical', this)">Critical Attention</button>
