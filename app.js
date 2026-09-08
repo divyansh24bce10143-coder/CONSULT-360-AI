@@ -292,12 +292,6 @@ function closeTopbarMenu() {
   }
 }
 
-function handleMenuSearchPatient(event) {
-  event?.stopPropagation();
-  closeTopbarMenu();
-  openPatientSearchModal();
-}
-
 function handleMenuIngestPatient(event) {
   event?.stopPropagation();
   closeTopbarMenu();
@@ -561,25 +555,16 @@ async function markAllNotificationsRead() {
 
 // ── Server Health Check ───────────────────────────────────────────────────
 async function checkServerHealth() {
-  const dot = document.getElementById('status-dot');
-  const txt = document.getElementById('status-text');
   try {
     const res = await fetch('/api/health');
     const data = await res.json();
     state.serverOnline = true;
 
-    if (data.gemini === 'connected') {
-      dot.className = 'status-dot connected';
-      txt.textContent = 'Clinical AI Engine Active (Gemini 3.6 Flash)';
-    } else {
-      dot.className = 'status-dot disconnected';
-      txt.textContent = 'Engine Connected — Key Missing';
+    if (data.gemini !== 'connected') {
       showToast('GEMINI_API_KEY missing in server/.env', 'error');
     }
   } catch (e) {
     state.serverOnline = false;
-    dot.className = 'status-dot disconnected';
-    txt.textContent = 'Server Offline (Local Dev)';
   }
 }
 
@@ -662,10 +647,7 @@ function renderDashboardWorklist() {
   if (kpiPendEl) kpiPendEl.textContent = pendingCount;
   if (kpiTotEl)  kpiTotEl.textContent  = scopedPatients.length;
 
-  const quickStats = document.getElementById('triage-quick-stats');
-  if (quickStats) {
-    quickStats.innerHTML = `<strong>${scopedPatients.length} ${state.scopeMode === 'my' ? 'Assigned' : 'Hospital'} Patients</strong> · <strong>${criticalCount} Critical</strong> · <strong>${pendingCount} Pending Labs</strong>`;
-  }
+
 
   // Filter patients for the dashboard table (triage tab + search query)
   const filtered = scopedPatients.filter(p => {

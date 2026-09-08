@@ -90,7 +90,7 @@ body.clinical-theme {
 
 /* ── Top Clinical Bar ─────────────────────────────────────────────────────── */
 #clinical-topbar {
-  background-color: var(--navy-900);
+  background-color: var(--deep-teal);
   color: var(--text-inverse);
   height: 58px;
   padding: 0 20px;
