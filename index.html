@@ -221,13 +221,29 @@
           </div>
         </div>
 
-        <button class="btn-clinical-ghost" onclick="handleSignOut()" title="Sign out to hospital login gateway" style="padding:6px 12px">
-          Sign Out
-        </button>
-
-        <button class="btn-clinical-primary" onclick="showUploadModal()" title="Ingest & analyze new multi-source patient records">
-          <span class="btn-icon">＋</span> Ingest Patient Records
-        </button>
+        <!-- 3-Lines Action Dropdown Menu -->
+        <div class="topbar-menu-dropdown-wrapper" id="topbar-menu-wrapper">
+          <button class="topbar-menu-btn" id="topbar-menu-btn" onclick="toggleTopbarMenu(event)" title="Clinical Actions Menu" aria-label="Menu" aria-expanded="false">
+            <span class="menu-bar"></span>
+            <span class="menu-bar"></span>
+            <span class="menu-bar"></span>
+          </button>
+          <div class="topbar-menu-dropdown hidden" id="topbar-menu-dropdown">
+            <button class="menu-dropdown-item" onclick="handleMenuSearchPatient(event)">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <span>Search Patient</span>
+            </button>
+            <button class="menu-dropdown-item" onclick="handleMenuIngestPatient(event)">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+              <span>Ingest Patient Record</span>
+            </button>
+            <div class="menu-dropdown-divider"></div>
+            <button class="menu-dropdown-item menu-item-danger" onclick="handleMenuSignOut(event)">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+              <span>Sign Out</span>
+            </button>
+          </div>
+        </div>
       </div>
     </header>
 
@@ -239,7 +255,7 @@
     <aside id="clinical-sidebar">
       <div class="sidebar-header">
         <div class="sidebar-title-row">
-          <span class="sidebar-heading">Outpatient Queue</span>
+          <span class="sidebar-heading">Patients</span>
           <span class="patient-count-badge" id="sidebar-patient-count">10</span>
         </div>
 
@@ -644,11 +660,11 @@
           <kbd class="shortcut-key">5</kbd>
         </div>
         <div class="shortcut-row">
-          <span class="shortcut-desc">Next Patient in Queue</span>
+          <span class="shortcut-desc">Next Patient in Worklist</span>
           <kbd class="shortcut-key">]</kbd>
         </div>
         <div class="shortcut-row">
-          <span class="shortcut-desc">Previous Patient in Queue</span>
+          <span class="shortcut-desc">Previous Patient in Worklist</span>
           <kbd class="shortcut-key">[</kbd>
         </div>
         <div class="shortcut-row">
@@ -660,7 +676,7 @@
           <kbd class="shortcut-key">Esc</kbd>
         </div>
         <div class="shortcut-row">
-          <span class="shortcut-desc">Focus Search Queue</span>
+          <span class="shortcut-desc">Focus Search Box</span>
           <kbd class="shortcut-key">/</kbd>
         </div>
       </div>

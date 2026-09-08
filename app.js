@@ -264,6 +264,67 @@ function handleSignOut() {
   showToast('Signed out of clinical session');
 }
 
+// ── Topbar Actions Dropdown Menu (3-lines menu) ────────────────────────────
+function toggleTopbarMenu(event) {
+  event?.stopPropagation();
+  const dropdown = document.getElementById('topbar-menu-dropdown');
+  const btn = document.getElementById('topbar-menu-btn');
+  if (!dropdown) return;
+  const isHidden = dropdown.classList.contains('hidden');
+  if (isHidden) {
+    dropdown.classList.remove('hidden');
+    btn?.classList.add('active');
+    btn?.setAttribute('aria-expanded', 'true');
+  } else {
+    dropdown.classList.add('hidden');
+    btn?.classList.remove('active');
+    btn?.setAttribute('aria-expanded', 'false');
+  }
+}
+
+function closeTopbarMenu() {
+  const dropdown = document.getElementById('topbar-menu-dropdown');
+  const btn = document.getElementById('topbar-menu-btn');
+  if (dropdown && !dropdown.classList.contains('hidden')) {
+    dropdown.classList.add('hidden');
+    btn?.classList.remove('active');
+    btn?.setAttribute('aria-expanded', 'false');
+  }
+}
+
+function handleMenuSearchPatient(event) {
+  event?.stopPropagation();
+  closeTopbarMenu();
+  showDashboardView();
+  setTimeout(() => {
+    const input = document.getElementById('sidebar-search-input') || document.getElementById('table-search-input');
+    if (input) {
+      input.focus();
+      input.select?.();
+      input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, 100);
+}
+
+function handleMenuIngestPatient(event) {
+  event?.stopPropagation();
+  closeTopbarMenu();
+  showUploadModal();
+}
+
+function handleMenuSignOut(event) {
+  event?.stopPropagation();
+  closeTopbarMenu();
+  handleSignOut();
+}
+
+window.addEventListener('click', (e) => {
+  const wrapper = document.getElementById('topbar-menu-wrapper');
+  if (wrapper && !wrapper.contains(e.target)) {
+    closeTopbarMenu();
+  }
+});
+
 // ── Hospital Information System Data Fetching ──────────────────────────────
 async function loadHospitalData() {
   try {
@@ -611,7 +672,7 @@ function renderSidebarQueue() {
          id="pi-${p.id}" onclick="selectPatient('${p.id}')">
       <div class="patient-item-row-top">
         <span class="patient-item-name">${p.name}</span>
-        <span class="patient-item-time">⏰ ${(p.appointmentTime || '10:00 AM').split(' ')[0]}</span>
+        <span class="patient-item-time">${(p.appointmentTime || '10:00 AM').split(' ')[0]}</span>
       </div>
       <div class="patient-item-row-mid">${p.condition || 'General Consultation'}</div>
       <div class="patient-item-row-bot">
@@ -1574,6 +1635,10 @@ async function processFiles(files) {
   const tempId = 'NEW_' + Date.now();
   const tempMrn = 'MRN-' + Math.floor(1000 + Math.random() * 9000);
 
+  const docId = state.doctor?.doctorId || 'DOC1001';
+  const docName = state.doctor?.name || 'Dr. Amit Sharma';
+  const docDept = state.doctor?.department || 'General Medicine';
+
   const tempPatient = {
     id: tempId,
     mrn: tempMrn,
@@ -1586,22 +1651,31 @@ async function processFiles(files) {
     riskLevel: 'medium',
     triageCategory: 'Review Required',
     lastVisit: 'Today',
-    attendingDoctor: 'Dr. Sarah Chen, MD',
-    avatar: 'NR',
+    attendingDoctor: docName,
+    assignedDoctorId: docId,
+    department: docDept,
+    avatar: (label.replace(/[^a-zA-Z]/g, '') || 'PT').substring(0, 2).toUpperCase(),
     overdueGap: 'Analysis in Progress',
     allergies: [],
     careJourney: [
       { id: 'step-1', name: 'Consultation', status: 'completed', date: 'Today', note: 'Document batch uploaded.' },
-      { id: 'step-2', name: 'Diagnosis', status: 'pending', date: 'Pending', note: 'Extracting entities.' },
-      { id: 'step-3', name: 'Treatment', status: 'pending', date: 'Pending', note: 'Reconciling regimen.' },
-      { id: 'step-4', name: 'Investigation', status: 'attention', date: 'Auditing', note: 'Evaluating guidelines.' },
+      { id: 'step-2', name: 'Diagnosis', status: 'completed', date: 'Today', note: 'Extracting entities.' },
+      { id: 'step-3', name: 'Treatment', status: 'completed', date: 'Today', note: 'Reconciling regimen.' },
+      { id: 'step-4', name: 'Investigation', status: 'attention', date: 'Today', note: 'Auditing guidelines.' },
       { id: 'step-5', name: 'Follow-up', status: 'pending', date: 'TBD', note: 'Awaiting doctor assessment.' },
       { id: 'step-6', name: 'Review', status: 'pending', date: 'TBD', note: 'Final sign-off.' }
     ]
   };
 
   closeUploadModal();
-  DEMO_PATIENTS.unshift(tempPatient);
+
+  // Ensure the newly ingested patient is immediately added to active worklist
+  if (!state.patients) state.patients = [];
+  state.patients.unshift(tempPatient);
+  if (typeof DEMO_PATIENTS !== 'undefined') {
+    DEMO_PATIENTS.unshift(tempPatient);
+  }
+
   renderSidebarQueue();
   renderDashboardWorklist();
 
@@ -1692,20 +1766,38 @@ async function processFiles(files) {
 
             state.currentPatientId = tempId;
             state.currentResult = result;
-            DEMO_RESULTS[tempId] = result;
+            state.results[tempId] = result;
+            if (typeof DEMO_RESULTS !== 'undefined') {
+              DEMO_RESULTS[tempId] = result;
+            }
 
             if (result.patient) {
               const p = result.patient;
               tempPatient.name       = p.name       || tempPatient.name;
-              tempPatient.age        = p.age        || '—';
-              tempPatient.gender     = p.gender     || '—';
-              tempPatient.bloodGroup = p.bloodGroup || '—';
-              tempPatient.avatar     = tempPatient.name.substring(0, 2).toUpperCase();
+              tempPatient.age        = p.age        || tempPatient.age;
+              tempPatient.gender     = p.gender     || tempPatient.gender;
+              tempPatient.bloodGroup = p.bloodGroup || tempPatient.bloodGroup;
+              tempPatient.avatar     = (tempPatient.name || 'PT').replace(/[^a-zA-Z]/g, '').substring(0, 2).toUpperCase() || 'PT';
               tempPatient.allergies  = p.allergies  || [];
-              renderPatientHeader(tempPatient);
-              renderSidebarQueue();
-              renderDashboardWorklist();
             }
+
+            if (result.risk) {
+              const r = (result.risk || '').toLowerCase();
+              tempPatient.riskLevel = (r.includes('critical') || r.includes('high')) ? 'critical' : r.includes('medium') ? 'medium' : 'low';
+            }
+            if (result.summary?.chiefComplaint || result.summary?.oneLiner) {
+              tempPatient.condition = result.summary.chiefComplaint || result.summary.oneLiner;
+            }
+            if (result.missingInvestigations && result.missingInvestigations.length > 0) {
+              tempPatient.overdueGap = `${result.missingInvestigations.length} Pending Test${result.missingInvestigations.length > 1 ? 's' : ''}`;
+            } else {
+              tempPatient.overdueGap = 'Routine Monitoring';
+            }
+
+            renderPatientHeader(tempPatient);
+            renderCareJourneyStepper(tempPatient);
+            renderSidebarQueue();
+            renderDashboardWorklist();
 
             renderAllTabs(result);
             showToast('Pre-consultation brief synthesized successfully');
@@ -1741,10 +1833,10 @@ async function processFiles(files) {
 // ── Patient Record Discharge / Delete ──────────────────────────────────────
 function deletePatient(event, id) {
   event.stopPropagation();
-  const patient = DEMO_PATIENTS.find(p => p.id === id);
+  const patient = state.patients?.find(p => p.id === id) || (typeof DEMO_PATIENTS !== 'undefined' ? DEMO_PATIENTS.find(p => p.id === id) : null);
   if (!patient) return;
 
-  const confirmed = confirm(`Discharge patient "${patient.name}" (${patient.mrn || id}) from today's active worklist queue?`);
+  const confirmed = confirm(`Discharge patient "${patient.name}" (${patient.mrn || id}) from today's active worklist?`);
   if (!confirmed) return;
 
   executePatientRemoval(id, patient.name);
@@ -1752,19 +1844,26 @@ function deletePatient(event, id) {
 
 function handlePatientDeleteFromDetail() {
   if (!state.currentPatientId) return;
-  const patient = DEMO_PATIENTS.find(p => p.id === state.currentPatientId);
+  const patient = state.patients?.find(p => p.id === state.currentPatientId) || (typeof DEMO_PATIENTS !== 'undefined' ? DEMO_PATIENTS.find(p => p.id === state.currentPatientId) : null);
   if (!patient) return;
 
-  const confirmed = confirm(`Discharge patient "${patient.name}" (${patient.mrn || state.currentPatientId}) from active queue?`);
+  const confirmed = confirm(`Discharge patient "${patient.name}" (${patient.mrn || state.currentPatientId}) from active worklist?`);
   if (!confirmed) return;
 
   executePatientRemoval(state.currentPatientId, patient.name);
 }
 
 function executePatientRemoval(id, name) {
-  const index = DEMO_PATIENTS.findIndex(p => p.id === id);
-  if (index !== -1) DEMO_PATIENTS.splice(index, 1);
-  if (DEMO_RESULTS[id]) delete DEMO_RESULTS[id];
+  if (state.patients) {
+    const index = state.patients.findIndex(p => p.id === id);
+    if (index !== -1) state.patients.splice(index, 1);
+  }
+  if (typeof DEMO_PATIENTS !== 'undefined') {
+    const index = DEMO_PATIENTS.findIndex(p => p.id === id);
+    if (index !== -1) DEMO_PATIENTS.splice(index, 1);
+  }
+  if (state.results && state.results[id]) delete state.results[id];
+  if (typeof DEMO_RESULTS !== 'undefined' && DEMO_RESULTS[id]) delete DEMO_RESULTS[id];
 
   if (state.currentPatientId === id) {
     showDashboardView();
