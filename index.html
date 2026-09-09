@@ -140,28 +140,7 @@
 
         <!-- Loading Sequence State (Shown during transition) -->
         <div id="auth-loading-state" class="auth-loading-state hidden">
-          <div class="auth-spinner-crest">⚕</div>
-          <h3 class="auth-loading-title">Authenticating Clinical Session</h3>
-          <p class="auth-loading-subtitle" id="auth-loading-step-text">Verifying credentials with Medical Directory...</p>
-
-          <div class="auth-progress-track">
-            <div id="auth-progress-bar" class="auth-progress-fill"></div>
-          </div>
-
-          <div class="auth-checklist-progression">
-            <div class="auth-check-item" id="auth-step-1">
-              <span class="auth-check-dot"></span>
-              <span class="auth-check-label">Verifying credentials</span>
-            </div>
-            <div class="auth-check-item" id="auth-step-2">
-              <span class="auth-check-dot"></span>
-              <span class="auth-check-label">Loading today's patients</span>
-            </div>
-            <div class="auth-check-item" id="auth-step-3">
-              <span class="auth-check-dot"></span>
-              <span class="auth-check-label">Fetching AI insights</span>
-            </div>
-          </div>
+          <div class="auth-loading-spinner"></div>
         </div>
 
       </div>
@@ -195,7 +174,6 @@
           </div>
         </div>
       </div>
- 
 
       <div class="topbar-right">
         <!-- Clinician Profile with Dynamic Greeting -->
@@ -330,8 +308,8 @@
                   <th>Primary Diagnosis</th>
                   <th>Care Journey Stage</th>
                   <th>Care Gap / Next Action</th>
-                  <th>Last Encounter</th>
-                  <th style="text-align:right">Action</th>
+                  <th>Last Checkup</th>
+                  <th style="text-align:center">Action</th>
                 </tr>
               </thead>
               <tbody id="worklist-tbody">
