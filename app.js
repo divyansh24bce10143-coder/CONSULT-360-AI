@@ -128,11 +128,6 @@ async function handleAuthSubmit(event) {
 
   const authForm = document.getElementById('auth-form');
   const loadingState = document.getElementById('auth-loading-state');
-  const stepText = document.getElementById('auth-loading-step-text');
-  const progressBar = document.getElementById('auth-progress-bar');
-  const step1 = document.getElementById('auth-step-1');
-  const step2 = document.getElementById('auth-step-2');
-  const step3 = document.getElementById('auth-step-3');
 
   // Verify against /api/login endpoint
   let loginResult = null;
@@ -165,31 +160,7 @@ async function handleAuthSubmit(event) {
   if (authForm) authForm.classList.add('hidden');
   if (loadingState) loadingState.classList.remove('hidden');
 
-  // Sequence Step 1: Verifying Credentials (0ms)
-  if (step1) step1.className = 'auth-check-item active';
-  if (stepText) stepText.textContent = `Verifying credentials for ${doctorId.toUpperCase()} with Medical Directory...`;
-  if (progressBar) progressBar.style.width = '33%';
-
-  await new Promise(r => setTimeout(r, 600));
-
-  // Sequence Step 2: Loading Today's Patients (600ms)
-  if (step1) step1.className = 'auth-check-item done';
-  if (step2) step2.className = 'auth-check-item active';
-  if (stepText) stepText.textContent = 'Loading today\'s hospital outpatient triage queue...';
-  if (progressBar) progressBar.style.width = '66%';
-
-  await new Promise(r => setTimeout(r, 600));
-
-  // Sequence Step 3: Fetching AI Insights (1200ms)
-  if (step2) step2.className = 'auth-check-item done';
-  if (step3) step3.className = 'auth-check-item active';
-  if (stepText) stepText.textContent = 'Fetching clinical AI decision support models (Gemini 3.6 Flash)...';
-  if (progressBar) progressBar.style.width = '100%';
-
-  await new Promise(r => setTimeout(r, 600));
-  if (step3) step3.className = 'auth-check-item done';
-
-  // Complete Authentication State
+  await new Promise(r => setTimeout(r, 800));
   state.authenticated = true;
   state.doctor = loginResult.doctor;
 
@@ -648,7 +619,6 @@ function renderDashboardWorklist() {
   if (kpiTotEl)  kpiTotEl.textContent  = scopedPatients.length;
 
 
-
   // Filter patients for the dashboard table (triage tab + search query)
   const filtered = scopedPatients.filter(p => {
     if (state.searchQuery) {
@@ -715,7 +685,7 @@ function renderDashboardWorklist() {
           <div style="font-family:var(--font-mono);font-size:11.5px;color:var(--text-secondary)">${p.lastVisit || 'Today'}</div>
           <div style="font-size:10.5px;color:var(--text-muted)">${p.attendingDoctor ? p.attendingDoctor.split(',')[0] : state.doctor.name}</div>
         </td>
-        <td style="text-align:right">
+        <td style="text-align:center">
           <button class="table-action-btn" onclick="selectPatient('${p.id}')">
             Open Clinical Brief →
           </button>
